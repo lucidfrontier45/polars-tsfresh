@@ -1,0 +1,587 @@
+features:
+  basic_statistics:
+    - name: mean
+      description: Returns the mean of x
+      how_to_implement: Calculate arithmetic mean using numpy.mean()
+      fctype: simple
+      minimal: true
+      dependencies: [numpy]
+
+    - name: median
+      description: Returns the median of x
+      how_to_implement: Calculate median using numpy.median()
+      fctype: simple
+      minimal: true
+      dependencies: [numpy]
+
+    - name: variance
+      description: Returns the variance of x
+      how_to_implement: Calculate variance using numpy.var()
+      fctype: simple
+      minimal: true
+      dependencies: [numpy]
+
+    - name: standard_deviation
+      description: Returns the standard deviation of x
+      how_to_implement: Calculate standard deviation using numpy.std()
+      fctype: simple
+      minimal: true
+      dependencies: [numpy]
+
+    - name: length
+      description: Returns the length of x
+      how_to_implement: Return len(x), handles empty arrays
+      fctype: simple
+      minimal: true
+      dependencies: [numpy]
+
+    - name: maximum
+      description: Calculates the highest value of the time series x
+      how_to_implement: Calculate maximum using numpy.max()
+      fctype: simple
+      minimal: true
+      dependencies: [numpy]
+
+    - name: minimum
+      description: Calculates the lowest value of the time series x
+      how_to_implement: Calculate minimum using numpy.min()
+      fctype: simple
+      minimal: true
+      dependencies: [numpy]
+
+    - name: absolute_maximum
+      description: Calculates the highest absolute value of the time series x
+      how_to_implement: Calculate np.max(np.abs(x)), returns NaN for empty series
+      fctype: simple
+      minimal: true
+      dependencies: [numpy]
+
+    - name: root_mean_square
+      description: Returns the root mean square (rms) of the time series
+      how_to_implement: sqrt(mean(x^2)), returns NaN for empty series
+      fctype: simple
+      minimal: true
+      dependencies: [numpy]
+
+    - name: sum_values
+      description: Calculates the sum over the time series values
+      how_to_implement: Sum all values using np.sum(), returns 0 for empty series
+      fctype: simple
+      minimal: true
+      dependencies: [numpy]
+
+  distribution_features:
+    - name: skewness
+      description: Returns the sample skewness of x (calculated with the adjusted Fisher-Pearson standardized moment coefficient G1)
+      how_to_implement: Use pandas.Series.skew() with skipna=False
+      fctype: simple
+      minimal: false
+      dependencies: [pandas]
+      notes: Requires pandas Series input, converts numpy array to Series if needed
+
+    - name: kurtosis
+      description: Returns the kurtosis of x (calculated with the adjusted Fisher-Pearson standardized moment coefficient G2)
+      how_to_implement: Use pandas.Series.kurtosis() method
+      fctype: simple
+      minimal: false
+      dependencies: [pandas]
+      notes: Requires pandas Series input, calculates excess kurtosis
+
+    - name: variation_coefficient
+      description: Returns the variation coefficient (standard error / mean, give relative value of variation around mean) of x
+      how_to_implement: Calculate np.std(x) / np.mean(x), returns NaN if mean is zero
+      fctype: simple
+      minimal: false
+      dependencies: [numpy]
+
+    - name: quantile
+      description: Calculates the q quantile of x. This is the value of x greater than q% of the ordered values from x
+      how_to_implement: Use np.quantile(x, q), returns NaN for empty series
+      fctype: simple
+      minimal: false
+      dependencies: [numpy]
+
+    - name: binned_entropy
+      description: First bins the values of x into max_bins equidistant bins. Then calculates the entropy
+      how_to_implement: Create histogram with max_bins, calculate -sum(p*log(p)) where p are normalized bin probabilities
+      fctype: simple
+      minimal: false
+      dependencies: [numpy]
+      notes: Returns NaN if input contains NaN values, handles edge case where p=0
+
+    - name: benford_correlation
+      description: Useful for anomaly detection applications. Returns the correlation from first digit distribution when compared to the Newcomb-Benford's Law distribution
+      how_to_implement: Extract first digit from each value, compare distribution to Benford's law using correlation coefficient
+      fctype: simple
+      minimal: false
+      dependencies: [numpy]
+      notes: "Uses Benford's law: P(d) = log10(1 + 1/d) for digits 1-9"
+
+  change_and_rate_features:
+    - name: mean_abs_change
+      description: Average over first differences. Returns the mean over the absolute differences between subsequent time series values
+      how_to_implement: "Calculate mean of absolute differences: np.mean(np.abs(np.diff(x)))"
+      fctype: simple
+      minimal: false
+      dependencies: [numpy]
+
+    - name: mean_change
+      description: Average over time series differences. Returns the mean over the differences between subsequent time series values
+      how_to_implement: Calculate (x[-1] - x[0]) / (len(x) - 1), returns NaN if len(x) <= 1
+      fctype: simple
+      minimal: false
+      dependencies: [numpy]
+
+    - name: mean_second_derivative_central
+      description: Returns the mean value of a central approximation of the second derivative
+      how_to_implement: Calculate (x[-1] - x[-2] - x[1] + x[0]) / (2 * (len(x) - 2)), returns NaN if len(x) <= 2
+      fctype: simple
+      minimal: false
+      dependencies: [numpy]
+
+    - name: absolute_sum_of_changes
+      description: Returns the sum over the absolute value of consecutive changes in the series x
+      how_to_implement: Calculate np.sum(np.abs(np.diff(x)))
+      fctype: simple
+      minimal: false
+      dependencies: [numpy]
+
+    - name: cid_ce
+      description: This function calculator is an estimate for a time series complexity
+      how_to_implement: If normalize=True, z-normalize series, then calculate sqrt(sum(diff(x)^2))
+      fctype: simple
+      minimal: false
+      dependencies: [numpy]
+      notes: normalize parameter controls z-transformation, returns 0.0 if std is zero after normalization
+
+  position_and_extrema_features:
+    - name: first_location_of_maximum
+      description: Returns the first location of the maximum value of x. The position is calculated relatively to the length of x
+      how_to_implement: Return np.argmax(x) / len(x), returns NaN for empty series
+      fctype: simple
+      minimal: false
+      dependencies: [numpy]
+
+    - name: last_location_of_maximum
+      description: Returns the relative last location of the maximum value of x. The position is calculated relatively to the length of x
+      how_to_implement: Return 1.0 - np.argmax(x[::-1]) / len(x), returns NaN for empty series
+      fctype: simple
+      minimal: false
+      dependencies: [numpy]
+
+    - name: first_location_of_minimum
+      description: Returns the first location of the minimal value of x. The position is calculated relatively to the length of x
+      how_to_implement: Return np.argmin(x) / len(x), returns NaN for empty series
+      fctype: simple
+      minimal: false
+      dependencies: [numpy]
+
+    - name: last_location_of_minimum
+      description: Returns the last location of the minimal value of x. The position is calculated relatively to the length of x
+      how_to_implement: Return 1.0 - np.argmin(x[::-1]) / len(x), returns NaN for empty series
+      fctype: simple
+      minimal: false
+      dependencies: [numpy]
+
+    - name: count_above_mean
+      description: Returns the number of values in x that are higher than the mean of x
+      how_to_implement: Calculate np.sum(x > np.mean(x))
+      fctype: simple
+      minimal: false
+      dependencies: [numpy]
+
+    - name: count_below_mean
+      description: Returns the number of values in x that are lower than the mean of x
+      how_to_implement: Calculate np.sum(x < np.mean(x))
+      fctype: simple
+      minimal: false
+      dependencies: [numpy]
+
+    - name: count_above
+      description: Returns the percentage of values in x that are higher than t
+      how_to_implement: Calculate np.sum(x >= t) / len(x)
+      fctype: simple
+      minimal: false
+      dependencies: [numpy]
+
+    - name: count_below
+      description: Returns the percentage of values in x that are lower than t
+      how_to_implement: Calculate np.sum(x <= t) / len(x)
+      fctype: simple
+      minimal: false
+      dependencies: [numpy]
+
+    - name: has_duplicate
+      description: Checks if any value in x occurs more than once
+      how_to_implement: Check if len(x) != len(np.unique(x))
+      fctype: simple
+      minimal: false
+      dependencies: [numpy]
+
+    - name: has_duplicate_max
+      description: Checks if the maximum value of x is observed more than once
+      how_to_implement: Check if np.sum(x == np.max(x)) >= 2
+      fctype: simple
+      minimal: false
+      dependencies: [numpy]
+
+    - name: has_duplicate_min
+      description: Checks if the minimal value of x is observed more than once
+      how_to_implement: Check if np.sum(x == np.min(x)) >= 2
+      fctype: simple
+      minimal: false
+      dependencies: [numpy]
+
+    - name: longest_strike_above_mean
+      description: Returns the length of the longest consecutive subsequence in x that is bigger than the mean of x
+      how_to_implement: Use helper _get_length_sequences_where(x > np.mean(x)), return max length or 0 if empty
+      fctype: simple
+      minimal: false
+      dependencies: [numpy]
+      notes: Uses helper function _get_length_sequences_where to find consecutive True values
+
+    - name: longest_strike_below_mean
+      description: Returns the length of the longest consecutive subsequence in x that is smaller than the mean of x
+      how_to_implement: Use helper _get_length_sequences_where(x < np.mean(x)), return max length or 0 if empty
+      fctype: simple
+      minimal: false
+      dependencies: [numpy]
+      notes: Uses helper function _get_length_sequences_where to find consecutive True values
+
+  peak_valley_and_crossing_features:
+    - name: number_peaks
+      description: Calculates the number of peaks of at least support n in the time series x
+      how_to_implement: Find values greater than n neighbors on both sides using custom _roll function
+      fctype: simple
+      minimal: false
+      dependencies: [numpy]
+      notes: "Parameter constraint: n > 0. Uses helper _roll for efficient array shifting"
+
+    - name: number_cwt_peaks
+      description: Number of different peaks in x. Estimates peaks using CWT with Ricker wavelet
+      how_to_implement: Apply find_peaks_cwt with widths 1 to n, count detected peaks
+      fctype: simple
+      minimal: false
+      dependencies: [numpy, scipy.signal]
+      notes: Uses custom _ricker wavelet implementation, requires scipy.signal.find_peaks_cwt
+
+    - name: number_crossing_m
+      description: Calculates the number of crossings of x on m. A crossing is defined as two sequential values where the first value is lower than m and the next is greater, or vice-versa
+      how_to_implement: Detect sign changes in (x > m), count transitions
+      fctype: simple
+      minimal: false
+      dependencies: [numpy]
+
+  recurring_value_features:
+    - name: percentage_of_reoccurring_values_to_all_values
+      description: Returns the percentage of values that are present in the time series more than once
+      how_to_implement: Calculate len(unique values with count > 1) / len(unique values), returns NaN for empty series
+      fctype: simple
+      minimal: false
+      dependencies: [numpy]
+
+    - name: percentage_of_reoccurring_datapoints_to_all_datapoints
+      description: Returns the percentage of non-unique data points
+      how_to_implement: Count all occurrences of values appearing more than once, divide by total size
+      fctype: simple
+      minimal: false
+      dependencies: [pandas]
+      notes: Requires pandas Series, uses value_counts() method
+
+    - name: sum_of_reoccurring_values
+      description: Returns the sum of all values, that are present in the time series more than once
+      how_to_implement: Sum unique values that appear multiple times (each value counted once)
+      fctype: simple
+      minimal: false
+      dependencies: [numpy]
+
+    - name: sum_of_reoccurring_data_points
+      description: Returns the sum of all data points, that are present in the time series more than once
+      how_to_implement: Sum all occurrences of values appearing more than once (each occurrence counted)
+      fctype: simple
+      minimal: false
+      dependencies: [numpy]
+
+  frequency_and_wavelet_features:
+    - name: fft_coefficient
+      description: Calculates the fourier coefficients of the one-dimensional discrete Fourier Transform for real input by fast fourier transformation algorithm
+      how_to_implement: Compute FFT using np.fft.rfft(), extract real/imag/abs/angle of specified coefficients
+      fctype: combined
+      minimal: false
+      dependencies: [numpy]
+      notes: 'Parameter constraints: coeff >= 0, attr in ["real", "imag", "abs", "angle"]'
+
+    - name: fft_aggregated
+      description: Returns the spectral centroid (mean), variance, skew, and kurtosis of the absolute fourier transform spectrum
+      how_to_implement: "Compute FFT, calculate spectral moments: centroid (mean), variance, skew, kurtosis"
+      fctype: combined
+      minimal: false
+      dependencies: [numpy]
+      notes: 'aggtype parameter: "centroid", "variance", "skew", "kurtosis"'
+
+    - name: spkt_welch_density
+      description: This feature calculator estimates the cross power spectral density of the time series x at different frequencies
+      how_to_implement: Use scipy.signal.welch with nperseg=256, return power at specified frequency coefficients
+      fctype: combined
+      minimal: false
+      dependencies: [numpy, scipy.signal]
+
+    - name: cwt_coefficients
+      description: Calculates a Continuous wavelet transform for the Ricker wavelet
+      how_to_implement: Use pywt.cwt with Mexican hat wavelet, extract coefficients at specified widths
+      fctype: combined
+      minimal: false
+      dependencies: [pywt]
+      notes: Requires PyWavelets library, caches CWT results for efficiency
+
+  autocorrelation_and_time_series_models:
+    - name: autocorrelation
+      description: Calculates the autocorrelation of the specified lag
+      how_to_implement: "Calculate correlation between x and lagged version: sum((x[:n-l] - mean) * (x[l:] - mean)) / ((n-l) * var)"
+      fctype: simple
+      minimal: false
+      dependencies: [numpy]
+      notes: Returns NaN if variance is close to zero or if series too short
+
+    - name: agg_autocorrelation
+      description: Descriptive statistics on the autocorrelation of the time series
+      how_to_implement: Calculate ACF using statsmodels, apply aggregation function to first maxlag coefficients
+      fctype: combined
+      minimal: false
+      dependencies: [numpy, statsmodels]
+      notes: Uses statsmodels.tsa.stattools.acf, switches to FFT for series > 1250 points
+
+    - name: partial_autocorrelation
+      description: Calculates the value of the partial autocorrelation function at the given lag
+      how_to_implement: Calculate PACF using statsmodels with "ld" method
+      fctype: combined
+      minimal: false
+      dependencies: [statsmodels]
+      notes: Lag limit is 50% of sample size, uses statsmodels.tsa.stattools.pacf
+
+    - name: ar_coefficient
+      description: This feature calculator fits the unconditional maximum likelihood of an autoregressive AR(k) process
+      how_to_implement: Fit AutoReg model with lags=k, return specified coefficient indices
+      fctype: combined
+      minimal: false
+      dependencies: [statsmodels]
+      notes: Uses statsmodels.tsa.ar_model.AutoReg, caches results per lag value
+
+    - name: augmented_dickey_fuller
+      description: Does the time series have a unit root? Returns the Augmented Dickey-Fuller test statistic
+      how_to_implement: Run adfuller test with specified autolag, return teststat/pvalue/usedlag
+      fctype: combined
+      minimal: false
+      dependencies: [statsmodels]
+      notes: Caches results per autolag parameter, handles LinAlgError and ValueError
+
+  trend_and_regression_features:
+    - name: linear_trend
+      description: Calculate a linear least-squares regression for the values of the time series versus the sequence from 0 to length of the time series minus one
+      how_to_implement: Fit linear regression using scipy.stats.linregress on range(len(x))
+      fctype: combined
+      minimal: false
+      dependencies: [scipy.stats]
+      notes: "Extracts attributes: pvalue, rvalue, intercept, slope, stderr"
+
+    - name: linear_trend_timewise
+      description: Calculate a linear least-squares regression for the values of the time series versus the sequence from 0 to length of the time series minus one. This feature uses the index of the time series to fit the model, which must be of a datetime dtype
+      how_to_implement: Fit linear regression using datetime index converted to hours from first timestamp
+      fctype: combined
+      minimal: false
+      dependencies: [pandas, scipy.stats]
+      notes: Requires pd.Series with DatetimeIndex, converts time differences to hours
+
+    - name: agg_linear_trend
+      description: Calculates a linear least-squares regression for values of the time series that were aggregated over chunks versus the sequence from 0 up to the number of chunks minus one
+      how_to_implement: Aggregate time series into chunks using _aggregate_on_chunks, fit linear regression on chunks
+      fctype: combined
+      minimal: false
+      dependencies: [scipy.stats]
+      notes: Uses helper _aggregate_on_chunks, supports chunking with f_agg function
+
+  entropy_and_complexity_features:
+    - name: sample_entropy
+      description: Calculate and return sample entropy of x
+      how_to_implement: Split into templates of length m=2, count matches within tolerance 0.2*std, return -log(A/B)
+      fctype: simple
+      minimal: false
+      high_comp_cost: true
+      dependencies: [numpy]
+      notes: Uses m=2, r=0.2*std, very computationally expensive, uses helper _into_subchunks
+
+    - name: approximate_entropy
+      description: Implements a vectorized Approximate entropy algorithm
+      how_to_implement: Calculate phi(m) and phi(m+1), return |phi(m) - phi(m+1)|
+      fctype: simple
+      minimal: false
+      high_comp_cost: true
+      dependencies: [numpy]
+      notes: Highly parameter-dependent, stable for N > 2000, r must be positive
+
+    - name: permutation_entropy
+      description: Calculate the permutation entropy
+      how_to_implement: Create sub-chunks with dimension D and step tau, calculate ordinal patterns, compute entropy
+      fctype: simple
+      minimal: false
+      dependencies: [numpy]
+      notes: Uses helper _into_subchunks, applies argsort twice to get ordinal permutations
+
+    - name: lempel_ziv_complexity
+      description: Calculate a complexity estimate based on the Lempel-Ziv compression algorithm
+      how_to_implement: Bin values, encode as sub-words, count unique sub-words needed
+      fctype: simple
+      minimal: false
+      dependencies: [numpy]
+      notes: Returns complexity as ratio of dictionary entries to series length
+
+    - name: fourier_entropy
+      description: Calculate the binned entropy of the power spectral density of the time series
+      how_to_implement: Compute power spectrum using welch, normalize, calculate binned entropy
+      fctype: simple
+      minimal: false
+      dependencies: [scipy.signal]
+      notes: Uses welch method with max_length_per_segment=256
+
+  nonlinearity_and_lag_features:
+    - name: c3
+      description: Uses c3 statistics to measure non linearity in the time series
+      how_to_implement: Calculate mean(x[t+2*lag] * x[t+lag] * x[t]), using _roll helper
+      fctype: simple
+      minimal: false
+      dependencies: [numpy]
+      notes: Returns 0.0 if 2*lag >= n, uses helper _roll for efficient lagging
+
+    - name: time_reversal_asymmetry_statistic
+      description: Returns the time reversal asymmetry statistic
+      how_to_implement: Calculate mean(x[t+2*lag]^2 * x[t+lag] - x[t+lag] * x[t]^2)
+      fctype: simple
+      minimal: false
+      dependencies: [numpy]
+      notes: Returns 0.0 if 2*lag >= n, uses helper _roll for efficient lagging
+
+    - name: symmetry_looking
+      description: Boolean variable denoting if the distribution of x looks symmetric
+      how_to_implement: Check if |mean(x) - median(x)| < r * (max(x) - min(x))
+      fctype: combined
+      minimal: false
+      dependencies: [numpy]
+      notes: Parameter r controls tolerance as percentage of range
+
+  quantile_and_mass_distribution_features:
+    - name: change_quantiles
+      description: First fixes a corridor given by the quantiles ql and qh of the distribution of x. Then calculates the average, absolute value of consecutive changes of the series x inside this corridor
+      how_to_implement: Create corridor using pd.qcut, apply f_agg to changes within corridor
+      fctype: simple
+      minimal: false
+      dependencies: [numpy, pandas]
+      notes: "Parameter constraints: ql < qh, isabs boolean, f_agg is aggregation function name"
+
+    - name: index_mass_quantile
+      description: Calculates the relative index i of time series x where q% of the mass of x lies left of i
+      how_to_implement: Compute cumulative sum of absolute values, find index where cumulative >= q * total
+      fctype: combined
+      minimal: false
+      dependencies: [numpy]
+      notes: Returns NaN if total mass is zero, q is quantile percentage
+
+  specialized_physics_features:
+    - name: friedrich_coefficients
+      description: Coefficients of polynomial h(x), which has been fitted to the deterministic dynamics of Langevin model
+      how_to_implement: Use helper _estimate_friedrich_coefficients to fit polynomial to quantile-averaged dynamics
+      fctype: combined
+      minimal: false
+      dependencies: [numpy, pandas]
+      notes: Helper _estimate_friedrich_coefficients uses pd.qcut and np.polyfit, highly parameter-dependent
+
+    - name: max_langevin_fixed_point
+      description: Largest fixed point of dynamics estimated from polynomial h(x), which has been fitted to the deterministic dynamics of Langevin model
+      how_to_implement: Fit polynomial using _estimate_friedrich_coefficients, find real roots, return max root
+      fctype: simple
+      minimal: false
+      dependencies: [numpy]
+      notes: Returns NaN on LinAlgError or ValueError, highly parameter-dependent
+
+  energy_features:
+    - name: abs_energy
+      description: Returns the absolute energy of the time series which is the sum over the squared values
+      how_to_implement: "Calculate dot product: np.dot(x, x)"
+      fctype: simple
+      minimal: false
+      dependencies: [numpy]
+
+    - name: energy_ratio_by_chunks
+      description: Calculates the sum of squares of chunk i out of N chunks expressed as a ratio with the sum of squares over the whole series
+      how_to_implement: Split series into segments, calculate (chunk_energy / total_energy)
+      fctype: combined
+      minimal: false
+      dependencies: [numpy]
+      notes: "Parameter constraints: segment_focus < num_segments, num_segments > 0"
+
+    - name: variance_larger_than_standard_deviation
+      description: Is variance higher than the standard deviation? Boolean variable denoting if the variance of x is greater than its standard deviation
+      how_to_implement: Compare variance > sqrt(variance), equivalent to variance > 1
+      fctype: simple
+      minimal: false
+      dependencies: [numpy]
+
+  advanced_matrix_and_similarity_features:
+    - name: matrix_profile
+      description: Calculates the 1-D Matrix Profile and returns Tukey's Five Number Set plus the mean of that Matrix Profile
+      how_to_implement: Use matrixprofile library to compute profile, extract min/max/mean/median/25th/75th percentile
+      fctype: combined
+      minimal: false
+      dependencies: [stumpy, matrixprofile]
+      notes: Requires optional matrixprofile library, uses stumpy as fallback, marked as deprecated
+
+    - name: query_similarity_count
+      description: This feature calculator accepts an input query subsequence parameter, compares the query to all subsequences within the time series, and returns a count of the number of times the query was found
+      how_to_implement: Use stumpy.core.mass for z-normalized distance or mass_absolute for non-normalized
+      fctype: combined
+      minimal: false
+      dependencies: [stumpy]
+      notes: Normalization controlled by parameter, threshold controls match quality
+
+  utility_features:
+    - name: value_count
+      description: Count occurrences of value in time series x
+      how_to_implement: Count values matching specified value, handles NaN specially
+      fctype: simple
+      minimal: false
+      dependencies: [numpy]
+
+    - name: range_count
+      description: Count observed values within the interval [min, max)
+      how_to_implement: Count values where min <= x < max
+      fctype: simple
+      minimal: false
+      dependencies: [numpy]
+
+    - name: ratio_beyond_r_sigma
+      description: Ratio of values that are more than r * std(x) (so r times sigma) away from the mean of x
+      how_to_implement: Count values where |x - mean| > r * std, divide by total size
+      fctype: simple
+      minimal: false
+      dependencies: [numpy]
+
+    - name: large_standard_deviation
+      description: Does time series have large standard deviation? Checks if std(x) > r * (max(x) - min(x))
+      how_to_implement: Compare standard deviation to r times range
+      fctype: simple
+      minimal: false
+      dependencies: [numpy]
+
+    - name: mean_n_absolute_max
+      description: Calculates the arithmetic mean of the n absolute maximum values of the time series
+      how_to_implement: Sort absolute values, take top n, calculate mean
+      fctype: simple
+      minimal: false
+      dependencies: [numpy]
+      notes: "Parameter constraint: number_of_maxima > 0, returns NaN if len(x) <= number_of_maxima"
+
+    - name: ratio_value_number_to_time_series_length
+      description: Returns a factor which is 1 if all values in the time series occur only once, and below one if this is not the case
+      how_to_implement: Calculate len(unique(x)) / len(x)
+      fctype: simple
+      minimal: false
+      dependencies: [numpy]
