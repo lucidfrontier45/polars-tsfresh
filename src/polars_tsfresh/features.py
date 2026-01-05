@@ -129,7 +129,7 @@ def minimal_feature_set(col_name: str) -> list[pl.Expr]:
         col_name (str): The name of the column to compute features for.
 
     Returns:
-        list[pl.Expr]: A list of Polars expressions that compute the minimal feature set.
+        list[pl.Expr]: A list of Polars expressions for the minimal feature set.
     """
     return [
         mean(col_name),

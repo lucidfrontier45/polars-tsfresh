@@ -4,7 +4,7 @@
 This is a Python project called "polars-tsfresh" that aims to implement time series feature extraction functions using Polars expressions. It's based on the tsfresh library concept but implemented with Polars for better performance.
 
 ## Tech Stack
-- **Python**: 3.13+
+- **Python**: 3.12+
 - **Core Dependencies**: Polars (>=1.36.1)
 - **Development Tools**: 
   - uv for package management
@@ -35,7 +35,7 @@ polars-tsfresh/
 - Need to implement remaining minimal class features
 
 ## Code Style and Conventions
-- Target Python 3.13
+- Target Python 3.12
 - Type hints required
 - Docstrings follow standard format
 - Functions take column name (str) and return pl.Expr

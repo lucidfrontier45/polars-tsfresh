@@ -3,10 +3,8 @@ name = "polars-tsfresh"
 version = "0.1.0"
 description = "A Project Template of Python with uv"
 authors = [{ name = "杜世橋 Du Shiqiao", email = "lucidfrontier.45@gmail.com" }]
-requires-python = ">=3.13"
-dependencies = [
-    "polars>=1.36.1",
-]
+requires-python = ">=3.12"
+dependencies = ["polars>=1.36.1"]
 
 [project.scripts]
 app = "app.cli:main"
@@ -15,7 +13,7 @@ app = "app.cli:main"
 dev = [
     "ipykernel>=7.1.0",
     "poethepoet>=0.39.0",
-    "pyrefly>=0.46.1",
+    "pyrefly>=0.46.3",
     "pytest-cov>=7.0.0",
     "ruff>=0.14.10",
 ]
@@ -40,7 +38,7 @@ test = "pytest tests --cov=polars_tsfresh --cov-report=term --cov-report=xml"
 filterwarnings = ["ignore::FutureWarning"]
 
 [tool.ruff]
-target-version = "py313"
+target-version = "py312"
 
 [tool.ruff.lint]
 select = [
@@ -66,4 +64,4 @@ exclude = ["tests/**/*", "deps/**/*"]
 "*/__init__.py" = ['F401']
 
 [tool.pyrefly]
-python-version = "3.13"
+python-version = "3.12"
