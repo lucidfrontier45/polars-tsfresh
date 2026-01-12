@@ -4,8 +4,8 @@ A high-performance Polars-based reimplementation of [tsfresh](https://tsfresh.re
 
 [![Python Version](https://img.shields.io/badge/python-3.12+-blue.svg)](https://www.python.org/)
 [![License](https://img.shields.io/badge/License-Apache%202.0-green.svg)](https://opensource.org/licenses/Apache-2.0)
-[![Tests](https://img.shields.io/badge/tests-passing-green.svg)](https://github.com/yourusername/polars-tsfresh/actions)
-[![Coverage](https://img.shields.io/badge/coverage-100%25-green.svg)](https://github.com/yourusername/polars-tsfresh)
+[![Tests](https://img.shields.io/badge/tests-passing-green.svg)](https://github.com/lucidfrontier45/polars-tsfresh/actions)
+[![Coverage](https://img.shields.io/badge/coverage-100%25-green.svg)](https://github.com/lucidfrontier45/polars-tsfresh)
 
 `polars-tsfresh` extracts statistical features from time series data stored in Polars DataFrames. It's designed as a faster, more type-safe alternative to tsfresh, leveraging Polars' efficient columnar operations for better performance on grouped time series data.
 
@@ -142,7 +142,7 @@ features = extract_features(
 
 ```bash
 # Clone the repository
-git clone https://github.com/yourusername/polars-tsfresh.git
+git clone https://github.com/lucidfrontier45/polars-tsfresh.git
 cd polars-tsfresh
 
 # Install with uv (includes dev dependencies)

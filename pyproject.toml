@@ -1,13 +1,49 @@
 [project]
 name = "polars-tsfresh"
 version = "0.1.0"
-description = "A Project Template of Python with uv"
+description = "Fast implementation of tsfresh time series feature extraction using Polars"
 authors = [{ name = "杜世橋 Du Shiqiao", email = "lucidfrontier.45@gmail.com" }]
 requires-python = ">=3.12"
 dependencies = ["polars>=1.36.1"]
+readme = "README.md"
+license = "MIT"
+license-files = ["LICENSE"]
+classifiers = [
+    "Development Status :: 3 - Alpha",
+    "Intended Audience :: Developers",
+    "Intended Audience :: Science/Research",
+    "License :: OSI Approved :: MIT License",
+    "Programming Language :: Python :: 3",
+    "Programming Language :: Python :: 3.12",
+    "Programming Language :: Python :: 3.13",
+    "Programming Language :: Python :: 3.14",
+    "Programming Language :: Python :: 3 :: Only",
+    "Topic :: Scientific/Engineering :: Artificial Intelligence",
+    "Topic :: Software Development :: Libraries :: Python Modules",
+]
+keywords = [
+    "time-series",
+    "feature-extraction",
+    "polars",
+    "tsfresh",
+    "data-science",
+    "machine-learning",
+    "statistics",
+]
 
-[project.scripts]
-app = "app.cli:main"
+[project.urls]
+homepage = "https://github.com/lucidfrontier45/polars-tsfresh"
+repository = "https://github.com/lucidfrontier45/polars-tsfresh"
+issues = "https://github.com/lucidfrontier45/polars-tsfresh/issues"
+
+[project.optional-dependencies]
+dev = [
+    "ipykernel>=7.1.0",
+    "poethepoet>=0.39.0",
+    "pyrefly>=0.46.3",
+    "pytest-cov>=7.0.0",
+    "ruff>=0.14.10",
+]
 
 [dependency-groups]
 dev = [
@@ -39,6 +75,7 @@ filterwarnings = ["ignore::FutureWarning"]
 
 [tool.ruff]
 target-version = "py312"
+line-length = 88
 
 [tool.ruff.lint]
 select = [
@@ -57,7 +94,6 @@ select = [
     "PIE",
     "PLE",
 ]
-# add directory names to exclude from analysis
 exclude = ["tests/**/*", "deps/**/*"]
 
 [tool.ruff.lint.per-file-ignores]
