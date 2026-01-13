@@ -24,7 +24,7 @@ def test_minimal():
         # check only close
         if not col.startswith("close"):
             continue
-        
+
         val = features[col][0]
         val_true = features_true[col][0]
         assert float_close(val, val_true), (
