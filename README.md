@@ -3,7 +3,7 @@
 A high-performance Polars-based reimplementation of [tsfresh](https://tsfresh.readthedocs.io/) for time series feature extraction.
 
 [![Python Version](https://img.shields.io/badge/python-3.12+-blue.svg)](https://www.python.org/)
-[![License](https://img.shields.io/badge/License-Apache%202.0-green.svg)](https://opensource.org/licenses/Apache-2.0)
+[![License](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
 [![Tests](https://img.shields.io/badge/tests-passing-green.svg)](https://github.com/lucidfrontier45/polars-tsfresh/actions)
 [![Coverage](https://img.shields.io/badge/coverage-100%25-green.svg)](https://github.com/lucidfrontier45/polars-tsfresh)
 
@@ -213,7 +213,7 @@ See `AGENTS.md` for detailed development guidelines and coding standards.
 
 ## License
 
-Licensed under the Apache License 2.0. See [LICENSE](LICENSE) for details.
+Licensed under the MIT License. See [LICENSE](LICENSE) for details.
 
 ## Authors
 
