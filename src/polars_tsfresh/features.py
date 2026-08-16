@@ -199,9 +199,12 @@ def kurtosis(col_name: str) -> pl.Expr:
 
 
 def variation_coefficient(col_name: str) -> pl.Expr:
-    """Compute the variation coefficient (standard deviation / mean).
+    """Compute the variation coefficient (population standard deviation / mean).
 
-    Returns NaN if the mean is zero.
+    Uses the population standard deviation (ddof=0) to match tsfresh, whose
+    reference implementation relies on ``numpy.std``.
+
+    Returns NaN if the mean is zero or non-finite, or the series is empty.
 
     Args:
         col_name (str): The name of the column to compute the variation coefficient for.
@@ -275,6 +278,11 @@ def benford_correlation(col_name: str) -> pl.Expr:
 
     Useful for anomaly detection. Returns NaN for empty series or if Benford's
     law produces zero variance.
+
+    Note: NaN values in the input are treated as 0 by ``np.nan_to_num``, whose
+    first digit 0 falls outside 1-9 and is excluded from the observed digit
+    distribution. Values whose first significant digit is undefined (0 only)
+    are therefore ignored rather than rejected.
 
     Args:
         col_name (str): The name of the column to compute the correlation for.

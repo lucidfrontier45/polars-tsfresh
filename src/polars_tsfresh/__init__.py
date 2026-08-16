@@ -10,7 +10,7 @@ def extract_features(
     column_id: str,
     column_sort: str,
     feature_sets: list[Callable[[str], list[pl.Expr]]] | None = None,
-):
+) -> pl.DataFrame:
     """
     Extract features from a Polars DataFrame using tsfresh-like functionality.
 
