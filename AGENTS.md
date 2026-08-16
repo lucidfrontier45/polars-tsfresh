@@ -120,6 +120,7 @@ result = grouped.agg(feature_exprs)
 def float_close(a: float, b: float, tol=1e-5) -> bool:
     return abs(a - b) < tol
 
+
 assert float_close(val, val_true), f"Feature {col} does not match: {val} != {val_true}"
 ```
 

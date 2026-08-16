@@ -36,15 +36,6 @@ homepage = "https://github.com/lucidfrontier45/polars-tsfresh"
 repository = "https://github.com/lucidfrontier45/polars-tsfresh"
 issues = "https://github.com/lucidfrontier45/polars-tsfresh/issues"
 
-[project.optional-dependencies]
-dev = [
-    "ipykernel>=7.1.0",
-    "poethepoet>=0.39.0",
-    "pyrefly>=0.46.3",
-    "pytest-cov>=7.0.0",
-    "ruff>=0.14.10",
-]
-
 [dependency-groups]
 dev = [
     "ipykernel>=7.1.0",
@@ -55,49 +46,29 @@ dev = [
 ]
 
 [build-system]
-requires = ["uv_build>=0.9.17,<0.10.0"]
+requires = ["uv_build>=0.11.21,<0.12.0"]
 build-backend = "uv_build"
 
 [tool.uv]
 managed = true
 
 [tool.poe.tasks]
-ruff_check = "ruff check ."
-ruff_fix = "ruff check --fix ."
-ruff_format = "ruff format ."
-pyrefly_check = "pyrefly check ."
-check = ["ruff_check", "pyrefly_check"]
-format = ["ruff_fix", "ruff_format"]
-test = "pytest tests --cov=polars_tsfresh --cov-report=term --cov-report=xml"
+lint_check = "ruff check --fix ."
+type_check = "pyrefly check ."
+check = ["lint_check", "type_check"]
+format = "ruff format ."
+test = "pytest tests"
+coverage = "pytest tests --cov=polars_tsfresh --cov-report=term --cov-report=xml"
 
 [tool.pytest.ini_options]
 filterwarnings = ["ignore::FutureWarning"]
 
 [tool.ruff]
 target-version = "py312"
-line-length = 88
+line-length = 100
 
 [tool.ruff.lint]
-select = [
-    "E",
-    "F",
-    "W",
-    "I",
-    "B",
-    "RUF",
-    "UP",
-    "N",
-    "SIM",
-    "A",
-    "S",
-    "DTZ",
-    "PIE",
-    "PLE",
-]
 exclude = ["tests/**/*", "deps/**/*"]
-
-[tool.ruff.lint.per-file-ignores]
-"*/__init__.py" = ['F401']
 
 [tool.pyrefly]
 python-version = "3.12"

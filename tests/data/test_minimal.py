@@ -27,6 +27,4 @@ def test_minimal():
 
         val = features[col][0]
         val_true = features_true[col][0]
-        assert float_close(val, val_true), (
-            f"Feature {col} does not match: {val} != {val_true}"
-        )
+        assert float_close(val, val_true), f"Feature {col} does not match: {val} != {val_true}"

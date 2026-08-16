@@ -129,11 +129,7 @@ Extract features from a time series DataFrame.
 
 **Example:**
 ```python
-features = extract_features(
-    df=my_dataframe,
-    column_id="stock_symbol",
-    column_sort="timestamp"
-)
+features = extract_features(df=my_dataframe, column_id="stock_symbol", column_sort="timestamp")
 ```
 
 ## Development
