@@ -1,0 +1,17 @@
+{
+  "languages": {
+    "Python": {
+      "language_servers": ["pyrefly", "ruff", "!basedpyright"],
+      "formatter": [
+        {
+          "code_action": "source.organizeImports.ruff",
+        },
+        {
+          "language_server": {
+            "name": "ruff",
+          },
+        },
+      ],
+    },
+  },
+}
