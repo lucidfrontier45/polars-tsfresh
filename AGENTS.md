@@ -1,8 +1,8 @@
-# AGENTS.md - Polars-TSFresh Development Guide
-
+# AGENTS.md
 This document provides essential information for coding agents working on the polars-tsfresh project.
 
 ## Build, Lint, and Test Commands
+This project is managed with `uv`. Always use `uv` to invoke Python and related tools.
 
 ### Full Quality Check
 ```bash
@@ -10,60 +10,11 @@ uv run poe check
 ```
 Runs both linting (ruff) and type checking (pyrefly) in sequence.
 
-### Individual Quality Checks
-```bash
-# Linting only
-uv run poe ruff_check
-
-# Type checking only
-uv run poe pyrefly_check
-
-# Fix linting issues automatically
-uv run poe ruff_fix
-```
-
 ### Testing
-```bash
-# Run full test suite with coverage
-uv run poe test
 
-# Run single test file
-uv run pytest tests/data/test_minimal.py
-
-# Run single test function
-uv run pytest tests/data/test_minimal.py::test_minimal
-
-# Run tests with verbose output
-uv run pytest tests/ -v
-
-# Run tests with coverage report only
-uv run pytest tests/ --cov=polars_tsfresh --cov-report=term
-```
-
-### Formatting
-```bash
-# Format all Python files
-uv run poe ruff_format
-
-# Check formatting without changes
-uv run poe ruff_check
-```
+Invoke `pytest` with `uv`.
 
 ## Code Style Guidelines
-
-### Import Organization
-- Standard library imports first
-- Third-party imports second (polars, pathlib, etc.)
-- Local imports last
-- One blank line between import groups
-- Import organization is enforced on save in VS Code
-
-```python
-import polars as pl
-from pathlib import Path
-
-from polars_tsfresh import extract_features
-```
 
 ### Function Signatures and Type Hints
 - Use comprehensive type hints for all parameters and return values
@@ -83,12 +34,6 @@ def extract_features(df: pl.DataFrame, column_id: str, column_sort: str) -> pl.D
     pl.DataFrame: DataFrame with extracted features.
     """
 ```
-
-### Naming Conventions
-- Functions: `snake_case` (e.g., `extract_features`, `minimal_feature_set`)
-- Variables: `snake_case` (e.g., `feature_columns`, `grouped`)
-- Constants: `UPPER_CASE` (none currently used)
-- Class names: `PascalCase` (none currently used)
 
 ### Documentation
 - Use Google-style docstrings with `Args:` and `Returns:` sections
@@ -143,50 +88,11 @@ def test_minimal():
     # ... assertions
 ```
 
-### File Organization
-- Source code in `src/polars_tsfresh/`
-- Main module functions in `__init__.py`
-- Feature functions in separate modules (e.g., `features.py`)
-- Tests in `tests/` with data in `tests/data/`
-- Configuration files in project root
-
-### Linting Rules (Ruff Configuration)
-The project uses extensive Ruff linting rules:
-- E: pycodestyle errors
-- F: Pyflakes
-- W: pycodestyle warnings
-- I: isort import sorting
-- B: flake8-bugbear
-- RUF: Ruff-specific rules
-- UP: pyupgrade
-- N: pep8-naming
-- SIM: flake8-simplify
-- A: flake8-builtins
-- S: flake8-bandit
-- DTZ: flake8-datetimez
-- PIE: flake8-pie
-- PLE: Pylint errors
-
-### Type Checking (Pyrefly)
-- Python 3.12 target version
-- Strict type checking enabled
-- All functions should have complete type annotations
-
-### VS Code Integration
-- Format on save enabled
-- Import organization on save enabled
-- Ruff as default Python formatter
-- Pyrefly language server (Pylance disabled)
-- Pytest integration enabled
-- Coverage gutters extension recommended
-
 ## Development Workflow
 
 1. Make changes to source code
 2. Run `uv run poe check` to verify quality
 3. Run `uv run poe test` to ensure tests pass
-4. Use `uv run poe format` if needed
-5. Commit changes
 
 ## Project-Specific Notes
 
