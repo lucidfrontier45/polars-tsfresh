@@ -1,6 +1,11 @@
 """Feature group modules. Re-exports keep the public ``features.X`` API stable."""
 
-from . import basic_statistics, change_and_rate_features, distribution_features
+from . import (
+    basic_statistics,
+    change_and_rate_features,
+    distribution_features,
+    position_and_extrema_features,
+)
 from .basic_statistics import (
     absolute_maximum,
     length,
@@ -31,6 +36,22 @@ from .distribution_features import (
     skewness,
     variation_coefficient,
 )
+from .position_and_extrema_features import (
+    count_above,
+    count_above_mean,
+    count_below,
+    count_below_mean,
+    first_location_of_maximum,
+    first_location_of_minimum,
+    has_duplicate,
+    has_duplicate_max,
+    has_duplicate_min,
+    last_location_of_maximum,
+    last_location_of_minimum,
+    longest_strike_above_mean,
+    longest_strike_below_mean,
+    position_and_extrema_feature_set,
+)
 
 __all__ = [
     "absolute_maximum",
@@ -41,10 +62,23 @@ __all__ = [
     "change_and_rate_feature_set",
     "change_and_rate_features",
     "cid_ce",
+    "count_above",
+    "count_above_mean",
+    "count_below",
+    "count_below_mean",
     "distribution_feature_set",
     "distribution_features",
+    "first_location_of_maximum",
+    "first_location_of_minimum",
+    "has_duplicate",
+    "has_duplicate_max",
+    "has_duplicate_min",
     "kurtosis",
+    "last_location_of_maximum",
+    "last_location_of_minimum",
     "length",
+    "longest_strike_above_mean",
+    "longest_strike_below_mean",
     "maximum",
     "mean",
     "mean_abs_change",
@@ -53,6 +87,8 @@ __all__ = [
     "median",
     "minimal_feature_set",
     "minimum",
+    "position_and_extrema_feature_set",
+    "position_and_extrema_features",
     "quantile",
     "root_mean_square",
     "skewness",

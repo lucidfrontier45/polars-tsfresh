@@ -3,7 +3,12 @@ from collections.abc import Callable
 import polars as pl
 
 from . import features
-from .features import basic_statistics, change_and_rate_features, distribution_features
+from .features import (
+    basic_statistics,
+    change_and_rate_features,
+    distribution_features,
+    position_and_extrema_features,
+)
 
 
 def extract_features(
@@ -49,4 +54,5 @@ __all__ = [
     "distribution_features",
     "extract_features",
     "features",
+    "position_and_extrema_features",
 ]

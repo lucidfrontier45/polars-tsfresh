@@ -2,7 +2,7 @@
 
 Source: [`plan/tsfresh.yaml`](tsfresh.yaml)
 
-Status: **21/76 functions implemented**. A checked group means every function in group is implemented in `src/polars_tsfresh/features.py`.
+Status: **34/76 functions implemented**. A checked group means every function in group is implemented in `src/polars_tsfresh/features.py`.
 
 ## Feature groups
 
@@ -33,20 +33,20 @@ Status: **21/76 functions implemented**. A checked group means every function in
   - [x] `absolute_sum_of_changes`
   - [x] `cid_ce`
 
-- [ ] `position_and_extrema_features` — 0/13
-  - [ ] `first_location_of_maximum`
-  - [ ] `last_location_of_maximum`
-  - [ ] `first_location_of_minimum`
-  - [ ] `last_location_of_minimum`
-  - [ ] `count_above_mean`
-  - [ ] `count_below_mean`
-  - [ ] `count_above`
-  - [ ] `count_below`
-  - [ ] `has_duplicate`
-  - [ ] `has_duplicate_max`
-  - [ ] `has_duplicate_min`
-  - [ ] `longest_strike_above_mean`
-  - [ ] `longest_strike_below_mean`
+- [x] `position_and_extrema_features` — 13/13
+  - [x] `first_location_of_maximum`
+  - [x] `last_location_of_maximum`
+  - [x] `first_location_of_minimum`
+  - [x] `last_location_of_minimum`
+  - [x] `count_above_mean`
+  - [x] `count_below_mean`
+  - [x] `count_above`
+  - [x] `count_below`
+  - [x] `has_duplicate`
+  - [x] `has_duplicate_max`
+  - [x] `has_duplicate_min`
+  - [x] `longest_strike_above_mean`
+  - [x] `longest_strike_below_mean`
 
 - [ ] `peak_valley_and_crossing_features` — 0/3
   - [ ] `number_peaks`
