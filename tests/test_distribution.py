@@ -44,3 +44,12 @@ def test_benford_correlation_excludes_infinity():
         without_inf["value__benford_correlation"][0],
         rel_tol=1e-12,
     )
+
+
+def test_binned_entropy_small_integer_range():
+    # Regression test: integer columns whose range is smaller than ``max_bins``
+    # used to raise ``ValueError: Too many bins for data range`` (np.histogram limit).
+    result = pl.DataFrame({"value": pl.Series([1, 2, 3], dtype=pl.Int64)}).select(
+        features.binned_entropy("value")
+    )
+    assert math.isfinite(result["value__binned_entropy"][0])

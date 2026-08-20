@@ -259,8 +259,12 @@ def binned_entropy(col_name: str, max_bins: int = 10) -> pl.Expr:
     Returns:
         pl.Expr: A Polars expression that computes the binned entropy.
     """
-    x = pl.col(col_name).cast(pl.Float64)
-    lo, hi = x.min(), x.max()
+    # Subtract min in the native dtype so the float cast never rounds away
+    # the bin boundaries (Int64 values near 2**53 would otherwise collapse
+    # onto a few float64 representatives and produce silently wrong counts).
+    x_native = pl.col(col_name)
+    x = (x_native - x_native.min()).cast(pl.Float64)
+    lo, hi = pl.lit(0.0), x.max()
     idx = ((x - lo) / (hi - lo) * max_bins).floor().clip(0, max_bins - 1)
     counts = idx.unique_counts().cast(pl.Float64)
     p = counts / counts.sum()
