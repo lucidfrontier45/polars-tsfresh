@@ -1,3 +1,4 @@
+import math
 from pathlib import Path
 
 import polars as pl
@@ -29,3 +30,37 @@ def test_distribution():
         val = extracted[col][0]
         val_true = expected[col][0]
         assert float_close(val, val_true), f"Feature {col} does not match: {val} != {val_true}"
+
+
+def test_benford_correlation_excludes_infinity():
+    with_inf = pl.DataFrame({"value": [float("inf"), 1.0, 2.0, 3.0]}).select(
+        features.benford_correlation("value")
+    )
+    without_inf = pl.DataFrame({"value": [1.0, 2.0, 3.0]}).select(
+        features.benford_correlation("value")
+    )
+    assert math.isclose(
+        with_inf["value__benford_correlation"][0],
+        without_inf["value__benford_correlation"][0],
+        rel_tol=1e-12,
+    )
+
+
+def test_binned_entropy_small_integer_range():
+    # Regression test: integer columns whose range is smaller than ``max_bins``
+    # used to raise ``ValueError: Too many bins for data range`` (np.histogram limit).
+    result = pl.DataFrame({"value": pl.Series([1, 2, 3], dtype=pl.Int64)}).select(
+        features.binned_entropy("value")
+    )
+    assert math.isfinite(result["value__binned_entropy"][0])
+
+
+def test_binned_entropy_full_integer_spans():
+    for values, dtype in [
+        ([-(2**63), 0, 2**63 - 1], pl.Int64),
+        ([0, 2**63, 2**64 - 1], pl.UInt64),
+    ]:
+        result = pl.DataFrame({"value": pl.Series(values, dtype=dtype)}).select(
+            features.binned_entropy("value")
+        )
+        assert math.isclose(result["value__binned_entropy"][0], math.log(3.0))

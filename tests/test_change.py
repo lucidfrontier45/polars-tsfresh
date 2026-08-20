@@ -113,3 +113,39 @@ def test_change_features_preserve_large_integer_differences():
         assert result["value__cid_ce"][0] == 1.0
         assert second_result["value__mean_second_derivative_central"][0] == 0.0
         assert normalized_result["value__cid_ce_normalized"][0] == 2.0
+
+
+def test_change_features_poison_native_diff_overflow():
+    # Int64 wrap: the extreme pair's difference (2**64 - 1) does not fit Int64.
+    result = pl.DataFrame(
+        {"value": pl.Series("value", [-(2**63), 2**63 - 1], dtype=pl.Int64)}
+    ).select(
+        features.mean_change("value"),
+        features.absolute_sum_of_changes("value"),
+    )
+    assert math.isnan(result["value__mean_change"][0])
+    assert math.isnan(result["value__absolute_sum_of_changes"][0])
+
+    # UInt64 overflow nulls the difference; the group must be poisoned, not summed.
+    result = pl.DataFrame({"value": pl.Series("value", [0, 2**63 + 1], dtype=pl.UInt64)}).select(
+        features.mean_change("value")
+    )
+    assert math.isnan(result["value__mean_change"][0])
+
+
+def test_change_features_sign_change_is_not_overflow():
+    result = pl.DataFrame({"value": [-2.0, 1.0, -3.0]}).select(
+        features.mean_change("value"),
+        features.absolute_sum_of_changes("value"),
+    )
+    assert math.isclose(result["value__mean_change"][0], -0.5)
+    assert math.isclose(result["value__absolute_sum_of_changes"][0], 7.0)
+
+
+def test_cid_ce_normalize_int64_span_beyond_native_range():
+    # Span 2**64 - 1 overflows Int64; centering must fall back to Float64,
+    # giving sqrt(3) for this three-level series instead of wrapped garbage.
+    result = pl.DataFrame(
+        {"value": pl.Series("value", [-(2**63), 0, 2**63 - 1], dtype=pl.Int64)}
+    ).select(features.cid_ce("value"))
+    assert math.isclose(result["value__cid_ce"][0], math.sqrt(3.0), rel_tol=1e-12)

@@ -42,6 +42,7 @@ def extract_features(df: pl.DataFrame, column_id: str, column_sort: str) -> pl.D
 - Include brief function description
 
 ### Polars Patterns
+- **Use pure Polars expressions as far as possible** — implement features with native `pl.Expr` operations only. Fall back to other approaches (`map_batches`, numpy, Python UDFs) only when absolutely necessary, e.g. no native equivalent exists. Pure expressions run in Rust, stay visible to the query optimizer, and avoid per-group Python overhead (measured ~16x faster for grouped feature extraction).
 - Use method chaining when possible
 - Use `.alias()` for column naming with `column_name__feature_name` pattern
 - Prefer expressions over direct column operations
