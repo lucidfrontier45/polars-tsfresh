@@ -103,9 +103,13 @@ def test_change_features_preserve_large_integer_differences():
         second_result = pl.DataFrame(
             {"value": pl.Series("value", [base, base + 1, base + 2], dtype=dtype)}
         ).select(features.mean_second_derivative_central("value"))
+        normalized_result = pl.DataFrame(
+            {"value": pl.Series("value", [base, base + 1], dtype=dtype)}
+        ).select(features.cid_ce("value", normalize=True).alias("value__cid_ce_normalized"))
 
         assert result["value__mean_abs_change"][0] == 1.0
         assert result["value__mean_change"][0] == 1.0
         assert result["value__absolute_sum_of_changes"][0] == 1.0
         assert result["value__cid_ce"][0] == 1.0
         assert second_result["value__mean_second_derivative_central"][0] == 0.0
+        assert normalized_result["value__cid_ce_normalized"][0] == 2.0

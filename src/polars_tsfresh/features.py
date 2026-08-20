@@ -441,12 +441,26 @@ def cid_ce(col_name: str, normalize: bool = True) -> pl.Expr:
 
     def _calc(s: pl.Series) -> float:
         if normalize:
-            arr = s.cast(pl.Float64).to_numpy()
-            if arr.size > 0:
-                std = np.std(arr)
+            values = s.to_list()
+            if s.dtype.is_integer() and values and all(value is not None for value in values):
+                differences = np.asarray(
+                    _safe_consecutive_differences(s),
+                    dtype=np.float64,
+                )
+                centered = np.asarray(
+                    [value - values[0] for value in values],
+                    dtype=np.float64,
+                )
+                std = np.std(centered)
                 if std != 0:
-                    arr = (arr - np.mean(arr)) / std
-            differences = np.diff(arr)
+                    differences /= std
+            else:
+                arr = s.cast(pl.Float64).to_numpy()
+                if arr.size > 0:
+                    std = np.std(arr)
+                    if std != 0:
+                        arr = (arr - np.mean(arr)) / std
+                differences = np.diff(arr)
         else:
             differences = _safe_consecutive_differences(s)
         return float(np.sqrt(np.sum(np.asarray(differences, dtype=np.float64) ** 2)))
