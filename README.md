@@ -78,7 +78,7 @@ The output shows features extracted for each group (in this case, one group "sp5
 
 ### Current Minimal Feature Set
 
-polars-tsfresh currently implements the "minimal" feature set from tsfresh, providing essential statistical measures:
+The default feature set is the "minimal" feature set from tsfresh, providing essential statistical measures:
 
 | Feature                | Description                 | tsfresh Equivalent                              |
 | ---------------------- | --------------------------- | ----------------------------------------------- |
@@ -93,6 +93,17 @@ polars-tsfresh currently implements the "minimal" feature set from tsfresh, prov
 | **root_mean_square**   | Root mean square (RMS)      | `tsfresh.feature_extraction.root_mean_square`   |
 | **sum_values**         | Sum of all values           | `tsfresh.feature_extraction.sum_values`         |
 
+### Additional Feature Sets
+
+Two additional feature sets are available through `feature_sets`:
+
+| Feature set | Features |
+| ----------- | -------- |
+| `distribution_feature_set` | skewness, kurtosis, variation coefficient, quantile, binned entropy, Benford correlation |
+| `change_and_rate_feature_set` | mean absolute change, mean change, central second derivative, absolute sum of changes, CID-CE |
+
+For detailed definitions and composition examples, see [`doc/feature-sets.md`](doc/feature-sets.md).
+
 ### Performance Benefits
 
 - **Polars Expressions**: Uses Polars' vectorized operations for optimal performance
@@ -102,14 +113,15 @@ polars-tsfresh currently implements the "minimal" feature set from tsfresh, prov
 
 ### Roadmap
 
-The project plans to implement comprehensive feature sets including:
+The remaining planned feature sets include:
 
-- **Distribution Features**: skewness, kurtosis, quantiles, entropy
-- **Change & Rate Features**: derivatives, trend analysis
 - **Position & Extrema Features**: peak detection, location analysis
-- **Frequency Features**: FFT coefficients, spectral analysis
-- **Autocorrelation Features**: time series modeling
-- **Complexity Features**: entropy measures, complexity estimates
+- **Peak, Valley & Crossing Features**: peaks and threshold crossings
+- **Recurring Value Features**: repeated-value statistics
+- **Frequency & Wavelet Features**: FFT coefficients, spectral analysis
+- **Autocorrelation & Time Series Models**: time series modeling
+- **Trend & Regression Features**: regression statistics
+- **Entropy & Complexity Features**: entropy measures and complexity estimates
 
 See `plan/tsfresh.yaml` for the complete feature roadmap.
 

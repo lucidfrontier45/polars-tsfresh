@@ -2,7 +2,7 @@
 
 Source: [`plan/tsfresh.yaml`](tsfresh.yaml)
 
-Status: **16/76 functions implemented**. A checked group means every function in group is implemented in `src/polars_tsfresh/features.py`.
+Status: **21/76 functions implemented**. A checked group means every function in group is implemented in `src/polars_tsfresh/features.py`.
 
 ## Feature groups
 
@@ -26,12 +26,12 @@ Status: **16/76 functions implemented**. A checked group means every function in
   - [x] `binned_entropy`
   - [x] `benford_correlation`
 
-- [ ] `change_and_rate_features` — 0/5
-  - [ ] `mean_abs_change`
-  - [ ] `mean_change`
-  - [ ] `mean_second_derivative_central`
-  - [ ] `absolute_sum_of_changes`
-  - [ ] `cid_ce`
+- [x] `change_and_rate_features` — 5/5
+  - [x] `mean_abs_change`
+  - [x] `mean_change`
+  - [x] `mean_second_derivative_central`
+  - [x] `absolute_sum_of_changes`
+  - [x] `cid_ce`
 
 - [ ] `position_and_extrema_features` — 0/13
   - [ ] `first_location_of_maximum`

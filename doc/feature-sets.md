@@ -157,20 +157,44 @@ computes:
 
 ### Composing feature sets
 
-Distribution features can be combined with the minimal feature set by
-passing both to `extract_features`:
+Feature sets can be combined by passing them together to
+`extract_features`:
 
 ```python
 from polars_tsfresh import extract_features
-from polars_tsfresh.features import minimal_feature_set, distribution_feature_set
+from polars_tsfresh.features import (
+    change_and_rate_feature_set,
+    distribution_feature_set,
+    minimal_feature_set,
+)
 
 features = extract_features(
     df,
     column_id="id",
     column_sort="date",
-    feature_sets=[minimal_feature_set, distribution_feature_set],
+    feature_sets=[
+        minimal_feature_set,
+        distribution_feature_set,
+        change_and_rate_feature_set,
+    ],
 )
 ```
 
 The order of `feature_sets` controls the order of the resulting
 columns.
+
+
+## Change and Rate Feature Set
+
+The change and rate feature set describes first differences and consecutive-value
+complexity. It produces five features per column.
+
+| Feature | Definition | Output column |
+| ------- | ---------- | ------------- |
+| Mean absolute change | Mean absolute difference between consecutive values | `x__mean_abs_change` |
+| Mean change | Mean difference between consecutive values | `x__mean_change` |
+| Mean central second derivative | Mean central second-derivative approximation | `x__mean_second_derivative_central` |
+| Absolute sum of changes | Sum of absolute consecutive differences | `x__absolute_sum_of_changes` |
+| CID-CE | L2 norm of consecutive differences after z-normalization | `x__cid_ce` |
+
+Use `cid_ce(col_name, normalize=False)` to compute CID-CE without z-normalization.

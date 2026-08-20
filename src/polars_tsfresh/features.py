@@ -1,5 +1,6 @@
 import math
 from collections.abc import Callable
+from itertools import pairwise
 
 import numpy as np
 import polars as pl
@@ -321,4 +322,165 @@ def distribution_feature_set(col_name: str) -> list[pl.Expr]:
         quantile(col_name),
         binned_entropy(col_name),
         benford_correlation(col_name),
+    ]
+
+
+def _safe_consecutive_differences(s: pl.Series) -> list[float | int]:
+    """Compute consecutive differences without integer overflow."""
+    values = s.to_list()
+    differences: list[float | int] = []
+    for left, right in pairwise(values):
+        if left is None or right is None:
+            differences.append(float("nan"))
+        else:
+            differences.append(right - left)
+    return differences
+
+
+def _safe_central_second_differences(s: pl.Series) -> list[float | int]:
+    """Compute central second differences without integer overflow."""
+    values = s.to_list()
+    differences: list[float | int] = []
+    for left, middle, right in zip(values, values[1:], values[2:]):
+        if left is None or middle is None or right is None:
+            differences.append(float("nan"))
+        else:
+            differences.append(right - 2 * middle + left)
+    return differences
+
+
+def mean_abs_change(col_name: str) -> pl.Expr:
+    """Compute the mean absolute change between consecutive values.
+
+    Args:
+        col_name (str): The name of the column to compute the feature for.
+
+    Returns:
+        pl.Expr: A Polars expression computing the mean absolute change.
+    """
+
+    def _calc(s: pl.Series) -> float:
+        differences = _safe_consecutive_differences(s)
+        if len(differences) == 0:
+            return float("nan")
+        return float(np.mean(np.abs(np.asarray(differences, dtype=np.float64))))
+
+    return _scalar_expr(col_name, _calc, f"{col_name}__mean_abs_change")
+
+
+def mean_change(col_name: str) -> pl.Expr:
+    """Compute the mean change between consecutive values.
+
+    Args:
+        col_name (str): The name of the column to compute the feature for.
+
+    Returns:
+        pl.Expr: A Polars expression computing the mean change.
+    """
+
+    def _calc(s: pl.Series) -> float:
+        differences = _safe_consecutive_differences(s)
+        if len(differences) == 0:
+            return float("nan")
+        return float(np.mean(np.asarray(differences, dtype=np.float64)))
+
+    return _scalar_expr(col_name, _calc, f"{col_name}__mean_change")
+
+
+def mean_second_derivative_central(col_name: str) -> pl.Expr:
+    """Compute the mean central approximation of the second derivative.
+
+    Args:
+        col_name (str): The name of the column to compute the feature for.
+
+    Returns:
+        pl.Expr: A Polars expression computing the mean central second derivative.
+    """
+
+    def _calc(s: pl.Series) -> float:
+        differences = _safe_central_second_differences(s)
+        if len(differences) == 0:
+            return float("nan")
+        second_differences = np.asarray(differences, dtype=np.float64)
+        return float(np.mean(second_differences) / 2)
+
+    return _scalar_expr(
+        col_name,
+        _calc,
+        f"{col_name}__mean_second_derivative_central",
+    )
+
+
+def absolute_sum_of_changes(col_name: str) -> pl.Expr:
+    """Compute the sum of absolute changes between consecutive values.
+
+    Args:
+        col_name (str): The name of the column to compute the feature for.
+
+    Returns:
+        pl.Expr: A Polars expression computing the absolute sum of changes.
+    """
+
+    def _calc(s: pl.Series) -> float:
+        differences = _safe_consecutive_differences(s)
+        return float(np.sum(np.abs(np.asarray(differences, dtype=np.float64))))
+
+    return _scalar_expr(col_name, _calc, f"{col_name}__absolute_sum_of_changes")
+
+
+def cid_ce(col_name: str, normalize: bool = True) -> pl.Expr:
+    """Compute the cumulative incremental deviation complexity estimate.
+
+    Args:
+        col_name (str): The name of the column to compute the feature for.
+        normalize (bool): Whether to z-normalize values before computing complexity.
+
+    Returns:
+        pl.Expr: A Polars expression computing the complexity estimate.
+    """
+
+    def _calc(s: pl.Series) -> float:
+        if normalize:
+            values = s.to_list()
+            if s.dtype.is_integer() and values and all(value is not None for value in values):
+                differences = np.asarray(
+                    _safe_consecutive_differences(s),
+                    dtype=np.float64,
+                )
+                centered = np.asarray(
+                    [value - values[0] for value in values],
+                    dtype=np.float64,
+                )
+                std = np.std(centered)
+                if std != 0:
+                    differences /= std
+            else:
+                arr = s.cast(pl.Float64).to_numpy()
+                if arr.size > 0:
+                    std = np.std(arr)
+                    if std != 0:
+                        arr = (arr - np.mean(arr)) / std
+                differences = np.diff(arr)
+        else:
+            differences = _safe_consecutive_differences(s)
+        return float(np.sqrt(np.sum(np.asarray(differences, dtype=np.float64) ** 2)))
+
+    return _scalar_expr(col_name, _calc, f"{col_name}__cid_ce")
+
+
+def change_and_rate_feature_set(col_name: str) -> list[pl.Expr]:
+    """Get change and rate features for a column.
+
+    Args:
+        col_name (str): The name of the column to compute features for.
+
+    Returns:
+        list[pl.Expr]: Polars expressions for change and rate features.
+    """
+    return [
+        mean_abs_change(col_name),
+        mean_change(col_name),
+        mean_second_derivative_central(col_name),
+        absolute_sum_of_changes(col_name),
+        cid_ce(col_name),
     ]
