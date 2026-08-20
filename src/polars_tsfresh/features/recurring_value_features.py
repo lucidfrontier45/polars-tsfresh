@@ -12,7 +12,7 @@ def percentage_of_reoccurring_values_to_all_values(col_name: str) -> pl.Expr:
     Returns:
         pl.Expr: A Polars expression computing the fraction of recurring values.
     """
-    x = pl.col(col_name).cast(pl.Float64)
+    x = pl.col(col_name)
     return (
         ((x.is_duplicated() & x.is_first_distinct()).sum() / x.n_unique())
         .cast(pl.Float64)
@@ -29,7 +29,7 @@ def percentage_of_reoccurring_datapoints_to_all_datapoints(col_name: str) -> pl.
     Returns:
         pl.Expr: A Polars expression computing the fraction of recurring data points.
     """
-    x = pl.col(col_name).cast(pl.Float64)
+    x = pl.col(col_name)
     return (
         (x.is_duplicated().sum() / pl.len())
         .cast(pl.Float64)
@@ -46,7 +46,7 @@ def sum_of_reoccurring_values(col_name: str) -> pl.Expr:
     Returns:
         pl.Expr: A Polars expression computing the sum of recurring values.
     """
-    x = pl.col(col_name).cast(pl.Float64)
+    x = pl.col(col_name)
     return (
         x.filter(x.is_duplicated() & x.is_first_distinct())
         .sum()
@@ -64,7 +64,7 @@ def sum_of_reoccurring_data_points(col_name: str) -> pl.Expr:
     Returns:
         pl.Expr: A Polars expression computing the sum of recurring data points.
     """
-    x = pl.col(col_name).cast(pl.Float64)
+    x = pl.col(col_name)
     return (
         x.filter(x.is_duplicated())
         .sum()

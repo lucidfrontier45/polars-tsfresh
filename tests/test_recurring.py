@@ -76,3 +76,26 @@ def test_recurring_value_features_via_grouped_extract_features():
     assert b["value__percentage_of_reoccurring_values_to_all_values"] == 0.0
     assert b["value__sum_of_reoccurring_data_points"] == 0.0
     assert b["value__sum_of_reoccurring_values"] == 0.0
+
+
+def test_recurring_value_features_keep_large_integers_distinct():
+    result = pl.DataFrame({"value": [2**53, 2**53 + 1]}).select(
+        features.recurring_value_feature_set("value")
+    )
+
+    assert result.row(0) == (0.0, 0.0, 0.0, 0.0)
+
+
+def test_recurring_value_features_sum_large_recurring_integers():
+    result = pl.DataFrame({"value": [2**53, 2**53 + 1, 2**53]}).select(
+        features.recurring_value_feature_set("value")
+    )
+    values = result.row(0, named=True)
+
+    assert math.isclose(
+        values["value__percentage_of_reoccurring_datapoints_to_all_datapoints"],
+        2 / 3,
+    )
+    assert values["value__percentage_of_reoccurring_values_to_all_values"] == 0.5
+    assert values["value__sum_of_reoccurring_values"] == 2**53
+    assert values["value__sum_of_reoccurring_data_points"] == 2**54
