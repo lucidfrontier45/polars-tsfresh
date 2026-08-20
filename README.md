@@ -95,12 +95,15 @@ The default feature set is the "minimal" feature set from tsfresh, providing ess
 
 ### Additional Feature Sets
 
-Two additional feature sets are available through `feature_sets`:
+Five additional feature sets are available through `feature_sets`:
 
 | Feature set | Features |
 | ----------- | -------- |
 | `distribution_feature_set` | skewness, kurtosis, variation coefficient, quantile, binned entropy, Benford correlation |
 | `change_and_rate_feature_set` | mean absolute change, mean change, central second derivative, absolute sum of changes, CID-CE |
+| `peak_valley_and_crossing_feature_set` | peak detection and threshold crossings |
+| `position_and_extrema_feature_set` | positions, extrema, duplicate checks, and strike lengths |
+| `recurring_value_feature_set` | recurring-value fraction, recurring-datapoint fraction, sum of recurring values, sum of recurring data points |
 
 For detailed definitions and composition examples, see [`doc/feature-sets.md`](doc/feature-sets.md).
 
@@ -115,9 +118,7 @@ For detailed definitions and composition examples, see [`doc/feature-sets.md`](d
 
 The remaining planned feature sets include:
 
-- **Position & Extrema Features**: peak detection, location analysis
-- **Peak, Valley & Crossing Features**: peaks and threshold crossings
-- **Recurring Value Features**: repeated-value statistics
+- **Peak, Valley & Crossing Features**: wavelet-based peak detection
 - **Frequency & Wavelet Features**: FFT coefficients, spectral analysis
 - **Autocorrelation & Time Series Models**: time series modeling
 - **Trend & Regression Features**: regression statistics
