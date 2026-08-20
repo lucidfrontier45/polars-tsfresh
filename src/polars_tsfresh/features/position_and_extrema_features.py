@@ -165,7 +165,7 @@ def has_duplicate(col_name: str) -> pl.Expr:
         pl.Expr: A Polars expression computing the duplicate flag.
     """
     x = pl.col(col_name)
-    return (x.count() != x.n_unique()).alias(f"{col_name}__has_duplicate")
+    return (pl.len() != x.n_unique()).alias(f"{col_name}__has_duplicate")
 
 
 def has_duplicate_max(col_name: str) -> pl.Expr:

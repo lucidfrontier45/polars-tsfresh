@@ -58,6 +58,20 @@ def test_has_duplicate_uses_three_cases():
     assert not df["unique__has_duplicate_min"][0]
 
 
+def test_has_duplicate_with_nulls():
+    df = pl.DataFrame(
+        {
+            "null_then_unique": [None, 1.0, 2.0],
+            "duplicate_with_null": [1.0, None, 1.0],
+        }
+    ).select(
+        features.has_duplicate("null_then_unique"),
+        features.has_duplicate("duplicate_with_null"),
+    )
+    assert not df["null_then_unique__has_duplicate"][0]
+    assert df["duplicate_with_null__has_duplicate"][0]
+
+
 def test_longest_strike_start_middle_end():
     df = pl.DataFrame(
         {
