@@ -157,18 +157,26 @@ computes:
 
 ### Composing feature sets
 
-Distribution features can be combined with the minimal feature set by
-passing both to `extract_features`:
+Feature sets can be combined by passing them together to
+`extract_features`:
 
 ```python
 from polars_tsfresh import extract_features
-from polars_tsfresh.features import minimal_feature_set, distribution_feature_set
+from polars_tsfresh.features import (
+    change_and_rate_feature_set,
+    distribution_feature_set,
+    minimal_feature_set,
+)
 
 features = extract_features(
     df,
     column_id="id",
     column_sort="date",
-    feature_sets=[minimal_feature_set, distribution_feature_set],
+    feature_sets=[
+        minimal_feature_set,
+        distribution_feature_set,
+        change_and_rate_feature_set,
+    ],
 )
 ```
 
