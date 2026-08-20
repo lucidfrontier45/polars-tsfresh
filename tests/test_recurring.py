@@ -99,3 +99,25 @@ def test_recurring_value_features_sum_large_recurring_integers():
     assert values["value__percentage_of_reoccurring_values_to_all_values"] == 0.5
     assert values["value__sum_of_reoccurring_values"] == 2**53
     assert values["value__sum_of_reoccurring_data_points"] == 2**54
+
+
+def test_recurring_value_features_sum_avoids_integer_overflow():
+    result = pl.DataFrame({"value": [2**62, 2**62]}).select(
+        features.recurring_value_feature_set("value")
+    )
+    values = result.row(0, named=True)
+
+    assert values["value__percentage_of_reoccurring_datapoints_to_all_datapoints"] == 1.0
+    assert values["value__percentage_of_reoccurring_values_to_all_values"] == 1.0
+    assert values["value__sum_of_reoccurring_values"] == 2**62
+    assert values["value__sum_of_reoccurring_data_points"] == 2**63
+
+
+def test_recurring_value_features_distinct_sum_avoids_integer_overflow():
+    result = pl.DataFrame({"value": [2**62, 2**62, 2**62 + 2048, 2**62 + 2048]}).select(
+        features.recurring_value_feature_set("value")
+    )
+    values = result.row(0, named=True)
+
+    assert values["value__sum_of_reoccurring_values"] == 2**63 + 2048
+    assert values["value__sum_of_reoccurring_data_points"] == 2**64 + 4096

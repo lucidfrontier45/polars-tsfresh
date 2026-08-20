@@ -49,8 +49,8 @@ def sum_of_reoccurring_values(col_name: str) -> pl.Expr:
     x = pl.col(col_name)
     return (
         x.filter(x.is_duplicated() & x.is_first_distinct())
-        .sum()
         .cast(pl.Float64)
+        .sum()
         .alias(f"{col_name}__sum_of_reoccurring_values")
     )
 
@@ -67,8 +67,8 @@ def sum_of_reoccurring_data_points(col_name: str) -> pl.Expr:
     x = pl.col(col_name)
     return (
         x.filter(x.is_duplicated())
-        .sum()
         .cast(pl.Float64)
+        .sum()
         .alias(f"{col_name}__sum_of_reoccurring_data_points")
     )
 
