@@ -1,3 +1,4 @@
+import math
 from pathlib import Path
 
 import polars as pl
@@ -29,3 +30,17 @@ def test_distribution():
         val = extracted[col][0]
         val_true = expected[col][0]
         assert float_close(val, val_true), f"Feature {col} does not match: {val} != {val_true}"
+
+
+def test_benford_correlation_excludes_infinity():
+    with_inf = pl.DataFrame({"value": [float("inf"), 1.0, 2.0, 3.0]}).select(
+        features.benford_correlation("value")
+    )
+    without_inf = pl.DataFrame({"value": [1.0, 2.0, 3.0]}).select(
+        features.benford_correlation("value")
+    )
+    assert math.isclose(
+        with_inf["value__benford_correlation"][0],
+        without_inf["value__benford_correlation"][0],
+        rel_tol=1e-12,
+    )

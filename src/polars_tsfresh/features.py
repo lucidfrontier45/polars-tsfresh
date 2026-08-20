@@ -156,12 +156,21 @@ def _poisoned(x: pl.Expr) -> pl.Expr:
 
 
 def _diffs(col_name: str) -> pl.Expr:
-    """Compute consecutive differences in the native dtype.
+    """Compute consecutive differences as Float64.
 
-    Polars promotes unsigned integers to a supersigned dtype before
-    differencing, so differences are exact over the full Int64/UInt64 range.
+    Differences are exact while they fit the column's diff dtype (the
+    supersigned promotion of the native dtype). Polars wraps signed overflow
+    (e.g. Int64 differences beyond ±2**63) and nulls unsigned overflow, so
+    such groups are poisoned with NaN instead of returning a wrong number.
     """
-    return pl.col(col_name).diff().drop_nulls()
+    x = pl.col(col_name)
+    d = x.diff()
+    overflow = (
+        ((x >= 0) & (x.shift(1) < 0) & (d < 0))
+        | ((x < 0) & (x.shift(1) > 0) & (d > 0))
+        | (d.is_null() & x.shift(1).is_not_null())
+    )
+    return pl.when(overflow).then(NAN).otherwise(d).drop_nulls()
 
 
 def skewness(col_name: str) -> pl.Expr:
@@ -270,10 +279,11 @@ def benford_correlation(col_name: str) -> pl.Expr:
     Useful for anomaly detection. Returns NaN for empty series or if Benford's
     law produces zero variance.
 
-    Note: NaN values in the input are treated as 0 by ``np.nan_to_num``, whose
-    first digit 0 falls outside 1-9 and is excluded from the observed digit
-    distribution. Values whose first significant digit is undefined (0 only)
-    are therefore ignored rather than rejected.
+    Note: Zero, NaN, and infinity values are excluded: their first
+    significant digit is undefined, so they are ignored rather than
+    rejected. (The numpy reference mapped NaN to 0 via ``np.nan_to_num`` and
+    ±inf to a large finite value with first digit 1; excluding inf instead
+    is a deliberate deviation.)
 
     Args:
         col_name (str): The name of the column to compute the correlation for.
@@ -331,7 +341,7 @@ def mean_abs_change(col_name: str) -> pl.Expr:
     return (
         pl.when(_poisoned(x))
         .then(NAN)
-        .otherwise(_diffs(col_name).cast(pl.Float64).abs().mean())
+        .otherwise(_diffs(col_name).abs().mean())
         .fill_null(NAN)
         .alias(f"{col_name}__mean_abs_change")
     )
@@ -350,7 +360,7 @@ def mean_change(col_name: str) -> pl.Expr:
     return (
         pl.when(_poisoned(x))
         .then(NAN)
-        .otherwise(_diffs(col_name).cast(pl.Float64).mean())
+        .otherwise(_diffs(col_name).mean())
         .fill_null(NAN)
         .alias(f"{col_name}__mean_change")
     )
@@ -369,7 +379,7 @@ def mean_second_derivative_central(col_name: str) -> pl.Expr:
     return (
         pl.when(_poisoned(x))
         .then(NAN)
-        .otherwise(_diffs(col_name).cast(pl.Float64).diff().drop_nulls().mean() / 2)
+        .otherwise(_diffs(col_name).diff().drop_nulls().mean() / 2)
         .fill_null(NAN)
         .alias(f"{col_name}__mean_second_derivative_central")
     )
@@ -388,7 +398,7 @@ def absolute_sum_of_changes(col_name: str) -> pl.Expr:
     return (
         pl.when(_poisoned(x))
         .then(NAN)
-        .otherwise(_diffs(col_name).cast(pl.Float64).abs().sum())
+        .otherwise(_diffs(col_name).abs().sum())
         .fill_null(0.0)
         .alias(f"{col_name}__absolute_sum_of_changes")
     )
@@ -405,7 +415,7 @@ def cid_ce(col_name: str, normalize: bool = True) -> pl.Expr:
         pl.Expr: A Polars expression computing the complexity estimate.
     """
     x = pl.col(col_name).cast(pl.Float64)
-    diffs = _diffs(col_name).cast(pl.Float64)
+    diffs = _diffs(col_name)
     if not normalize:
         return (
             pl.when(_poisoned(x))
@@ -414,15 +424,19 @@ def cid_ce(col_name: str, normalize: bool = True) -> pl.Expr:
             .fill_null(0.0)
             .alias(f"{col_name}__cid_ce")
         )
-    # Center on the minimum in the native dtype: unsigned-safe and exact for
-    # integers beyond 2**53, unlike a float z-score computed in place.
-    centered = pl.col(col_name) - pl.col(col_name).min()
-    std = centered.cast(pl.Float64).std(0)
+    # Min-center in the native dtype while the span fits it: exact for
+    # large-offset integer series (e.g. ns timestamps). When the span
+    # overflows the native dtype, native centering would wrap, so fall back
+    # to Float64 centering, which never wraps.
+    centered_native = pl.col(col_name) - pl.col(col_name).min()
+    fits = centered_native.min() >= 0
+    centered = pl.when(fits).then(centered_native.cast(pl.Float64)).otherwise(x - x.min())
+    std = centered.std(0)
     normalized = (centered - centered.mean()) / std
     inner = (
         pl.when(std == 0)
         .then(diffs.pow(2).sum().sqrt())
-        .otherwise(normalized.cast(pl.Float64).diff().drop_nulls().pow(2).sum().sqrt())
+        .otherwise(normalized.diff().drop_nulls().pow(2).sum().sqrt())
     )
     return (
         pl.when(_poisoned(x)).then(NAN).otherwise(inner).fill_null(0.0).alias(f"{col_name}__cid_ce")
