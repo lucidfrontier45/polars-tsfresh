@@ -13,6 +13,9 @@ def number_peaks(col_name: str, n: int = 1) -> pl.Expr:
     Returns:
         pl.Expr: A Polars expression computing the number of peaks.
     """
+    if n < 1:
+        return pl.lit(0, dtype=pl.Int64).alias(f"{col_name}__number_peaks")
+
     x = pl.col(col_name)
     is_peak = pl.lit(True)
     for offset in range(1, n + 1):
@@ -21,7 +24,7 @@ def number_peaks(col_name: str, n: int = 1) -> pl.Expr:
 
 
 def number_crossing_m(col_name: str, m: float = 0.0) -> pl.Expr:
-    """Count adjacent pairs that cross threshold ``m`` strictly.
+    """Count adjacent changes in whether values are above threshold ``m``.
 
     Args:
         col_name (str): The name of the column to compute the feature for.
@@ -32,10 +35,7 @@ def number_crossing_m(col_name: str, m: float = 0.0) -> pl.Expr:
     """
     x = pl.col(col_name).cast(pl.Float64)
     return (
-        ((x - m) * (x.shift(1) - m) < 0)
-        .sum()
-        .cast(pl.Int64)
-        .alias(f"{col_name}__number_crossing_m")
+        ((x > m) != (x.shift(1) > m)).sum().cast(pl.Int64).alias(f"{col_name}__number_crossing_m")
     )
 
 
