@@ -6,6 +6,7 @@ from . import (
     distribution_features,
     peak_valley_and_crossing_features,
     position_and_extrema_features,
+    recurring_value_features,
 )
 from .basic_statistics import (
     absolute_maximum,
@@ -58,6 +59,13 @@ from .position_and_extrema_features import (
     longest_strike_below_mean,
     position_and_extrema_feature_set,
 )
+from .recurring_value_features import (
+    percentage_of_reoccurring_datapoints_to_all_datapoints,
+    percentage_of_reoccurring_values_to_all_values,
+    recurring_value_feature_set,
+    sum_of_reoccurring_data_points,
+    sum_of_reoccurring_values,
+)
 
 __all__ = [
     "absolute_maximum",
@@ -97,12 +105,18 @@ __all__ = [
     "number_peaks",
     "peak_valley_and_crossing_feature_set",
     "peak_valley_and_crossing_features",
+    "percentage_of_reoccurring_datapoints_to_all_datapoints",
+    "percentage_of_reoccurring_values_to_all_values",
     "position_and_extrema_feature_set",
     "position_and_extrema_features",
     "quantile",
+    "recurring_value_feature_set",
+    "recurring_value_features",
     "root_mean_square",
     "skewness",
     "standard_deviation",
+    "sum_of_reoccurring_data_points",
+    "sum_of_reoccurring_values",
     "sum_values",
     "variance",
     "variation_coefficient",

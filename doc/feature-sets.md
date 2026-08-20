@@ -166,6 +166,7 @@ from polars_tsfresh.features import (
     change_and_rate_feature_set,
     distribution_feature_set,
     minimal_feature_set,
+    recurring_value_feature_set,
 )
 
 features = extract_features(
@@ -176,6 +177,7 @@ features = extract_features(
         minimal_feature_set,
         distribution_feature_set,
         change_and_rate_feature_set,
+        recurring_value_feature_set,
     ],
 )
 ```
@@ -198,3 +200,20 @@ complexity. It produces five features per column.
 | CID-CE | L2 norm of consecutive differences after z-normalization | `x__cid_ce` |
 
 Use `cid_ce(col_name, normalize=False)` to compute CID-CE without z-normalization.
+
+## Recurring Value Feature Set
+
+The recurring value feature set describes values and data points that occur more than once. It produces four features per column.
+
+### The four features
+
+For a column `x`, the recurring value feature set computes:
+
+| Feature | Definition | Output column |
+| ------- | ---------- | ------------- |
+| Percentage of recurring values | Fraction of distinct values occurring more than once | `x__percentage_of_reoccurring_values_to_all_values` |
+| Percentage of recurring data points | Fraction of data points whose value occurs more than once | `x__percentage_of_reoccurring_datapoints_to_all_datapoints` |
+| Sum of recurring values | Sum of each distinct recurring value once | `x__sum_of_reoccurring_values` |
+| Sum of recurring data points | Sum of all occurrences whose value recurs | `x__sum_of_reoccurring_data_points` |
+
+Percentages are fractions in `[0, 1]`, not values multiplied by 100. Empty series return `NaN` for percentage features; sums return `0`.
