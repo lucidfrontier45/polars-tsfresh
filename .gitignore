@@ -133,4 +133,8 @@ dmypy.json
 !.vscode/extensions.json
 
 # for library project, include lockfile
+# for library project, include lockfile
 uv.lock
+
+# agent working notes
+.todos/
