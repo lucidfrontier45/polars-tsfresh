@@ -249,8 +249,9 @@ def binned_entropy(col_name: str, max_bins: int = 10) -> pl.Expr:
 
     Returns NaN if the input is empty or contains NaN or null values.
 
-    Unlike ``numpy.histogram``, integer inputs whose value range is smaller
-    than ``max_bins`` are binned without error.
+    Integer inputs use exact native-dtype centering when their span fits the
+    dtype. Unlike ``numpy.histogram``, this avoids Float64 edge degradation above
+    ``2**53`` and handles value ranges smaller than ``max_bins`` without error.
 
     Args:
         col_name (str): The name of the column to compute the binned entropy for.
@@ -259,11 +260,17 @@ def binned_entropy(col_name: str, max_bins: int = 10) -> pl.Expr:
     Returns:
         pl.Expr: A Polars expression that computes the binned entropy.
     """
-    # Subtract min in the native dtype so the float cast never rounds away
-    # the bin boundaries (Int64 values near 2**53 would otherwise collapse
-    # onto a few float64 representatives and produce silently wrong counts).
+    # Native centering preserves large integer bin boundaries. Signed integer
+    # spans can overflow, detected by wrapped negative values; Float64 centering
+    # loses some precision but cannot silently wrap.
     x_native = pl.col(col_name)
-    x = (x_native - x_native.min()).cast(pl.Float64)
+    centered_native = x_native - x_native.min()
+    x_float = x_native.cast(pl.Float64)
+    x = (
+        pl.when(centered_native.min() >= 0)
+        .then(centered_native.cast(pl.Float64))
+        .otherwise(x_float - x_float.min())
+    )
     lo, hi = pl.lit(0.0), x.max()
     idx = ((x - lo) / (hi - lo) * max_bins).floor().clip(0, max_bins - 1)
     counts = idx.unique_counts().cast(pl.Float64)

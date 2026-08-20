@@ -53,3 +53,14 @@ def test_binned_entropy_small_integer_range():
         features.binned_entropy("value")
     )
     assert math.isfinite(result["value__binned_entropy"][0])
+
+
+def test_binned_entropy_full_integer_spans():
+    for values, dtype in [
+        ([-(2**63), 0, 2**63 - 1], pl.Int64),
+        ([0, 2**63, 2**64 - 1], pl.UInt64),
+    ]:
+        result = pl.DataFrame({"value": pl.Series(values, dtype=dtype)}).select(
+            features.binned_entropy("value")
+        )
+        assert math.isclose(result["value__binned_entropy"][0], math.log(3.0))
