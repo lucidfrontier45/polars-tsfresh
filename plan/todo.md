@@ -2,7 +2,7 @@
 
 Source: [`plan/tsfresh.yaml`](tsfresh.yaml)
 
-Status: **34/76 functions implemented**. A checked group means every function in group is implemented in `src/polars_tsfresh/features.py`.
+Status: **36/76 functions implemented**. A checked group means every function in group is implemented in `src/polars_tsfresh/features.py`.
 
 ## Feature groups
 
@@ -48,10 +48,10 @@ Status: **34/76 functions implemented**. A checked group means every function in
   - [x] `longest_strike_above_mean`
   - [x] `longest_strike_below_mean`
 
-- [ ] `peak_valley_and_crossing_features` — 0/3
-  - [ ] `number_peaks`
+- [ ] `peak_valley_and_crossing_features` — 2/3
+  - [x] `number_peaks`
   - [ ] `number_cwt_peaks`
-  - [ ] `number_crossing_m`
+  - [x] `number_crossing_m`
 
 - [ ] `recurring_value_features` — 0/4
   - [ ] `percentage_of_reoccurring_values_to_all_values`

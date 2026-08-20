@@ -4,6 +4,7 @@ from . import (
     basic_statistics,
     change_and_rate_features,
     distribution_features,
+    peak_valley_and_crossing_features,
     position_and_extrema_features,
 )
 from .basic_statistics import (
@@ -35,6 +36,11 @@ from .distribution_features import (
     quantile,
     skewness,
     variation_coefficient,
+)
+from .peak_valley_and_crossing_features import (
+    number_crossing_m,
+    number_peaks,
+    peak_valley_and_crossing_feature_set,
 )
 from .position_and_extrema_features import (
     count_above,
@@ -87,6 +93,10 @@ __all__ = [
     "median",
     "minimal_feature_set",
     "minimum",
+    "number_crossing_m",
+    "number_peaks",
+    "peak_valley_and_crossing_feature_set",
+    "peak_valley_and_crossing_features",
     "position_and_extrema_feature_set",
     "position_and_extrema_features",
     "quantile",
