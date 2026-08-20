@@ -54,3 +54,38 @@ def test_change_features_short_series():
     assert math.isnan(result["value__mean_second_derivative_central"][0])
     assert result["value__absolute_sum_of_changes"][0] == 0.0
     assert result["value__cid_ce"][0] == 0.0
+
+
+def test_change_features_propagate_nan_and_null():
+    nan_result = pl.DataFrame({"value": [1.0, 2.0, float("nan"), 4.0, 5.0]}).select(
+        features.mean_change("value"),
+        features.mean_second_derivative_central("value"),
+    )
+    null_result = pl.DataFrame({"value": [1.0, None, 3.0]}).select(
+        features.mean_change("value"),
+    )
+
+    assert math.isnan(nan_result["value__mean_change"][0])
+    assert math.isnan(nan_result["value__mean_second_derivative_central"][0])
+    assert math.isnan(null_result["value__mean_change"][0])
+
+
+def test_change_features_cast_unsigned_values():
+    result = pl.DataFrame({"value": pl.Series("value", [3, 1], dtype=pl.UInt8)}).select(
+        features.mean_abs_change("value"),
+        features.mean_change("value"),
+        features.absolute_sum_of_changes("value"),
+        features.cid_ce("value", normalize=False),
+    )
+    second_result = pl.DataFrame({"value": pl.Series("value", [3, 1, 0], dtype=pl.UInt8)}).select(
+        features.mean_second_derivative_central("value")
+    )
+
+    assert result["value__mean_abs_change"][0] == 2.0
+    assert result["value__mean_change"][0] == -2.0
+    assert result["value__absolute_sum_of_changes"][0] == 2.0
+    assert result["value__cid_ce"][0] == 2.0
+    assert math.isclose(
+        second_result["value__mean_second_derivative_central"][0],
+        0.5,
+    )

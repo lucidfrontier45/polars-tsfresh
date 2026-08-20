@@ -335,7 +335,7 @@ def mean_abs_change(col_name: str) -> pl.Expr:
     """
 
     def _calc(s: pl.Series) -> float:
-        arr = s.to_numpy()
+        arr = s.cast(pl.Float64).to_numpy()
         if arr.size <= 1:
             return float("nan")
         return float(np.mean(np.abs(np.diff(arr))))
@@ -354,10 +354,10 @@ def mean_change(col_name: str) -> pl.Expr:
     """
 
     def _calc(s: pl.Series) -> float:
-        arr = s.to_numpy()
+        arr = s.cast(pl.Float64).to_numpy()
         if arr.size <= 1:
             return float("nan")
-        return float((arr[-1] - arr[0]) / (arr.size - 1))
+        return float(np.mean(np.diff(arr)))
 
     return _scalar_expr(col_name, _calc, f"{col_name}__mean_change")
 
@@ -373,10 +373,11 @@ def mean_second_derivative_central(col_name: str) -> pl.Expr:
     """
 
     def _calc(s: pl.Series) -> float:
-        arr = s.to_numpy()
+        arr = s.cast(pl.Float64).to_numpy()
         if arr.size <= 2:
             return float("nan")
-        return float((arr[-1] - arr[-2] - arr[1] + arr[0]) / (2 * (arr.size - 2)))
+        second_differences = arr[2:] - 2 * arr[1:-1] + arr[:-2]
+        return float(np.mean(second_differences) / 2)
 
     return _scalar_expr(
         col_name,
@@ -396,7 +397,7 @@ def absolute_sum_of_changes(col_name: str) -> pl.Expr:
     """
 
     def _calc(s: pl.Series) -> float:
-        arr = s.to_numpy()
+        arr = s.cast(pl.Float64).to_numpy()
         return float(np.sum(np.abs(np.diff(arr))))
 
     return _scalar_expr(col_name, _calc, f"{col_name}__absolute_sum_of_changes")
@@ -414,7 +415,7 @@ def cid_ce(col_name: str, normalize: bool = True) -> pl.Expr:
     """
 
     def _calc(s: pl.Series) -> float:
-        arr = s.to_numpy()
+        arr = s.cast(pl.Float64).to_numpy()
         if normalize and arr.size > 0:
             std = np.std(arr)
             if std != 0:
