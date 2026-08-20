@@ -4,7 +4,7 @@ version = "0.1.1"
 description = "Fast implementation of tsfresh time series feature extraction using Polars"
 authors = [{ name = "杜世橋 Du Shiqiao", email = "lucidfrontier.45@gmail.com" }]
 requires-python = ">=3.12"
-dependencies = ["polars>=1.36.1", "numpy>=2.1"]
+dependencies = ["polars>=1.36.1"]
 readme = "README.md"
 license = "MIT"
 license-files = ["LICENSE"]
@@ -38,10 +38,11 @@ issues = "https://github.com/lucidfrontier45/polars-tsfresh/issues"
 [dependency-groups]
 dev = [
     "ipykernel>=7.1.0",
+    "numpy>=2.1",
     "poethepoet>=0.39.0",
     "pyrefly>=0.46.3",
     "pytest-cov>=7.0.0",
-    "ruff>=0.14.10",
+    "ruff>=0.16.3",
 ]
 
 [build-system]

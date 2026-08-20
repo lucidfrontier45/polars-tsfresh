@@ -1,8 +1,5 @@
 import math
-from collections.abc import Callable
-from itertools import pairwise
 
-import numpy as np
 import polars as pl
 
 
@@ -150,29 +147,21 @@ def minimal_feature_set(col_name: str) -> list[pl.Expr]:
     ]
 
 
-def _scalar_expr(
-    col_name: str,
-    func: "Callable[[pl.Series], float]",
-    name: str,
-    dtype: "pl.DataType | None" = None,
-) -> pl.Expr:
-    """Wrap a scalar ``func(pl.Series) -> float`` into a per-group aggregation expression.
+NAN = float("nan")
 
-    Args:
-        col_name (str): The input column to apply ``func`` to.
-        func (Callable[[pl.Series], float]): A function taking a ``pl.Series`` and returning a scalar.
-        name (str): The name of the output column.
-        dtype (pl.DataType): The Polars dtype of the scalar result.
 
-    Returns:
-        pl.Expr: A Polars expression that yields a scalar per group.
+def _poisoned(x: pl.Expr) -> pl.Expr:
+    """Return an expression that is True if the group contains any null or NaN value."""
+    return x.is_null().any() | x.is_nan().any()
+
+
+def _diffs(col_name: str) -> pl.Expr:
+    """Compute consecutive differences in the native dtype.
+
+    Polars promotes unsigned integers to a supersigned dtype before
+    differencing, so differences are exact over the full Int64/UInt64 range.
     """
-    return (
-        pl.col(col_name)
-        .map_batches(lambda s: pl.Series([func(s)]), return_dtype=dtype or pl.Float64)
-        .first()
-        .alias(name)
-    )
+    return pl.col(col_name).diff().drop_nulls()
 
 
 def skewness(col_name: str) -> pl.Expr:
@@ -213,17 +202,17 @@ def variation_coefficient(col_name: str) -> pl.Expr:
     Returns:
         pl.Expr: A Polars expression that computes the variation coefficient.
     """
-
-    def _calc(s: pl.Series) -> float:
-        arr = s.to_numpy()
-        if arr.size == 0:
-            return float("nan")
-        m = float(np.nanmean(arr))
-        if m == 0 or not math.isfinite(m):
-            return float("nan")
-        return float(np.nanstd(arr, ddof=0) / m)
-
-    return _scalar_expr(col_name, _calc, f"{col_name}__variation_coefficient")
+    # NaN/null values are skipped, matching the numpy.nanmean/numpy.nanstd
+    # semantics of the tsfresh reference implementation.
+    x = pl.col(col_name).cast(pl.Float64).drop_nulls().drop_nans()
+    m = x.mean()
+    return (
+        pl.when((m == 0) | ~m.is_finite())
+        .then(NAN)
+        .otherwise(x.std(0) / m)
+        .fill_null(NAN)
+        .alias(f"{col_name}__variation_coefficient")
+    )
 
 
 def quantile(col_name: str, q: float = 0.5) -> pl.Expr:
@@ -249,7 +238,10 @@ def binned_entropy(col_name: str, max_bins: int = 10) -> pl.Expr:
     Values are first binned into ``max_bins`` equidistant bins, then the entropy
     ``-sum(p * log(p))`` of the normalized bin probabilities is computed.
 
-    Returns NaN if the input is empty or contains NaN values.
+    Returns NaN if the input is empty or contains NaN or null values.
+
+    Unlike ``numpy.histogram``, integer inputs whose value range is smaller
+    than ``max_bins`` are binned without error.
 
     Args:
         col_name (str): The name of the column to compute the binned entropy for.
@@ -258,20 +250,18 @@ def binned_entropy(col_name: str, max_bins: int = 10) -> pl.Expr:
     Returns:
         pl.Expr: A Polars expression that computes the binned entropy.
     """
-
-    def _calc(s: pl.Series) -> float:
-        arr = s.to_numpy()
-        if arr.size == 0 or np.any(np.isnan(arr)):
-            return float("nan")
-        counts, _ = np.histogram(arr, bins=max_bins)
-        total = counts.sum()
-        if total == 0:
-            return float("nan")
-        p = counts / total
-        p = p[p > 0]
-        return float(-np.sum(p * np.log(p)))
-
-    return _scalar_expr(col_name, _calc, f"{col_name}__binned_entropy")
+    x = pl.col(col_name).cast(pl.Float64)
+    lo, hi = x.min(), x.max()
+    idx = ((x - lo) / (hi - lo) * max_bins).floor().clip(0, max_bins - 1)
+    counts = idx.unique_counts().cast(pl.Float64)
+    p = counts / counts.sum()
+    entropy = (-(p * p.log())).sum()
+    body = (
+        pl.when(x.is_nan().any() | x.is_null().any() | (x.len() == 0))
+        .then(NAN)
+        .otherwise(pl.when(hi == lo).then(0.0).otherwise(entropy))
+    )
+    return body.fill_null(NAN).alias(f"{col_name}__binned_entropy")
 
 
 def benford_correlation(col_name: str) -> pl.Expr:
@@ -291,19 +281,22 @@ def benford_correlation(col_name: str) -> pl.Expr:
     Returns:
         pl.Expr: A Polars expression that computes the Benford correlation.
     """
-    benford = np.log10(1.0 + 1.0 / np.arange(1, 10))
-
-    def _calc(s: pl.Series) -> float:
-        arr = s.to_numpy()
-        if arr.size == 0:
-            return float("nan")
-        first_digits = np.array(
-            [int(np.format_float_scientific(i)[:1]) for i in np.abs(np.nan_to_num(arr))]
-        )
-        observed = np.array([(first_digits == n).mean() for n in range(1, 10)])
-        return float(np.corrcoef(benford, observed)[0, 1])
-
-    return _scalar_expr(col_name, _calc, f"{col_name}__benford_correlation")
+    benford = [math.log10(1.0 + 1.0 / d) for d in range(1, 10)]
+    sb1, sb2 = 1.0, sum(b * b for b in benford)  # sum(benford) == 1
+    x = pl.col(col_name).cast(pl.Float64)
+    n = x.len()
+    digit = x.abs().cast(pl.String).str.extract(r"^[0.]*([1-9])", 1).cast(pl.Int64)
+    mapping = {d: benford[d - 1] for d in range(1, 10)}
+    sfb = digit.replace_strict(mapping, default=0.0, return_dtype=pl.Float64).sum() / n
+    counts = digit.drop_nulls().unique_counts().cast(pl.Float64)
+    sf1 = counts.sum() / n
+    sf2 = counts.pow(2).sum() / (n * n)
+    a_mean = sf1 / 9.0
+    b_mean = sb1 / 9.0
+    corr = (sfb / 9.0 - a_mean * b_mean) / (
+        (sf2 / 9.0 - a_mean**2) * (sb2 / 9.0 - b_mean**2)
+    ).sqrt()
+    return corr.fill_null(NAN).alias(f"{col_name}__benford_correlation")
 
 
 def distribution_feature_set(col_name: str) -> list[pl.Expr]:
@@ -325,30 +318,6 @@ def distribution_feature_set(col_name: str) -> list[pl.Expr]:
     ]
 
 
-def _safe_consecutive_differences(s: pl.Series) -> list[float | int]:
-    """Compute consecutive differences without integer overflow."""
-    values = s.to_list()
-    differences: list[float | int] = []
-    for left, right in pairwise(values):
-        if left is None or right is None:
-            differences.append(float("nan"))
-        else:
-            differences.append(right - left)
-    return differences
-
-
-def _safe_central_second_differences(s: pl.Series) -> list[float | int]:
-    """Compute central second differences without integer overflow."""
-    values = s.to_list()
-    differences: list[float | int] = []
-    for left, middle, right in zip(values, values[1:], values[2:]):
-        if left is None or middle is None or right is None:
-            differences.append(float("nan"))
-        else:
-            differences.append(right - 2 * middle + left)
-    return differences
-
-
 def mean_abs_change(col_name: str) -> pl.Expr:
     """Compute the mean absolute change between consecutive values.
 
@@ -358,14 +327,14 @@ def mean_abs_change(col_name: str) -> pl.Expr:
     Returns:
         pl.Expr: A Polars expression computing the mean absolute change.
     """
-
-    def _calc(s: pl.Series) -> float:
-        differences = _safe_consecutive_differences(s)
-        if len(differences) == 0:
-            return float("nan")
-        return float(np.mean(np.abs(np.asarray(differences, dtype=np.float64))))
-
-    return _scalar_expr(col_name, _calc, f"{col_name}__mean_abs_change")
+    x = pl.col(col_name).cast(pl.Float64)
+    return (
+        pl.when(_poisoned(x))
+        .then(NAN)
+        .otherwise(_diffs(col_name).cast(pl.Float64).abs().mean())
+        .fill_null(NAN)
+        .alias(f"{col_name}__mean_abs_change")
+    )
 
 
 def mean_change(col_name: str) -> pl.Expr:
@@ -377,14 +346,14 @@ def mean_change(col_name: str) -> pl.Expr:
     Returns:
         pl.Expr: A Polars expression computing the mean change.
     """
-
-    def _calc(s: pl.Series) -> float:
-        differences = _safe_consecutive_differences(s)
-        if len(differences) == 0:
-            return float("nan")
-        return float(np.mean(np.asarray(differences, dtype=np.float64)))
-
-    return _scalar_expr(col_name, _calc, f"{col_name}__mean_change")
+    x = pl.col(col_name).cast(pl.Float64)
+    return (
+        pl.when(_poisoned(x))
+        .then(NAN)
+        .otherwise(_diffs(col_name).cast(pl.Float64).mean())
+        .fill_null(NAN)
+        .alias(f"{col_name}__mean_change")
+    )
 
 
 def mean_second_derivative_central(col_name: str) -> pl.Expr:
@@ -396,18 +365,13 @@ def mean_second_derivative_central(col_name: str) -> pl.Expr:
     Returns:
         pl.Expr: A Polars expression computing the mean central second derivative.
     """
-
-    def _calc(s: pl.Series) -> float:
-        differences = _safe_central_second_differences(s)
-        if len(differences) == 0:
-            return float("nan")
-        second_differences = np.asarray(differences, dtype=np.float64)
-        return float(np.mean(second_differences) / 2)
-
-    return _scalar_expr(
-        col_name,
-        _calc,
-        f"{col_name}__mean_second_derivative_central",
+    x = pl.col(col_name).cast(pl.Float64)
+    return (
+        pl.when(_poisoned(x))
+        .then(NAN)
+        .otherwise(_diffs(col_name).cast(pl.Float64).diff().drop_nulls().mean() / 2)
+        .fill_null(NAN)
+        .alias(f"{col_name}__mean_second_derivative_central")
     )
 
 
@@ -420,12 +384,14 @@ def absolute_sum_of_changes(col_name: str) -> pl.Expr:
     Returns:
         pl.Expr: A Polars expression computing the absolute sum of changes.
     """
-
-    def _calc(s: pl.Series) -> float:
-        differences = _safe_consecutive_differences(s)
-        return float(np.sum(np.abs(np.asarray(differences, dtype=np.float64))))
-
-    return _scalar_expr(col_name, _calc, f"{col_name}__absolute_sum_of_changes")
+    x = pl.col(col_name).cast(pl.Float64)
+    return (
+        pl.when(_poisoned(x))
+        .then(NAN)
+        .otherwise(_diffs(col_name).cast(pl.Float64).abs().sum())
+        .fill_null(0.0)
+        .alias(f"{col_name}__absolute_sum_of_changes")
+    )
 
 
 def cid_ce(col_name: str, normalize: bool = True) -> pl.Expr:
@@ -438,34 +404,29 @@ def cid_ce(col_name: str, normalize: bool = True) -> pl.Expr:
     Returns:
         pl.Expr: A Polars expression computing the complexity estimate.
     """
-
-    def _calc(s: pl.Series) -> float:
-        if normalize:
-            values = s.to_list()
-            if s.dtype.is_integer() and values and all(value is not None for value in values):
-                differences = np.asarray(
-                    _safe_consecutive_differences(s),
-                    dtype=np.float64,
-                )
-                centered = np.asarray(
-                    [value - values[0] for value in values],
-                    dtype=np.float64,
-                )
-                std = np.std(centered)
-                if std != 0:
-                    differences /= std
-            else:
-                arr = s.cast(pl.Float64).to_numpy()
-                if arr.size > 0:
-                    std = np.std(arr)
-                    if std != 0:
-                        arr = (arr - np.mean(arr)) / std
-                differences = np.diff(arr)
-        else:
-            differences = _safe_consecutive_differences(s)
-        return float(np.sqrt(np.sum(np.asarray(differences, dtype=np.float64) ** 2)))
-
-    return _scalar_expr(col_name, _calc, f"{col_name}__cid_ce")
+    x = pl.col(col_name).cast(pl.Float64)
+    diffs = _diffs(col_name).cast(pl.Float64)
+    if not normalize:
+        return (
+            pl.when(_poisoned(x))
+            .then(NAN)
+            .otherwise(diffs.pow(2).sum().sqrt())
+            .fill_null(0.0)
+            .alias(f"{col_name}__cid_ce")
+        )
+    # Center on the minimum in the native dtype: unsigned-safe and exact for
+    # integers beyond 2**53, unlike a float z-score computed in place.
+    centered = pl.col(col_name) - pl.col(col_name).min()
+    std = centered.cast(pl.Float64).std(0)
+    normalized = (centered - centered.mean()) / std
+    inner = (
+        pl.when(std == 0)
+        .then(diffs.pow(2).sum().sqrt())
+        .otherwise(normalized.cast(pl.Float64).diff().drop_nulls().pow(2).sum().sqrt())
+    )
+    return (
+        pl.when(_poisoned(x)).then(NAN).otherwise(inner).fill_null(0.0).alias(f"{col_name}__cid_ce")
+    )
 
 
 def change_and_rate_feature_set(col_name: str) -> list[pl.Expr]:
