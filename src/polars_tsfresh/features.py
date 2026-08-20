@@ -322,3 +322,121 @@ def distribution_feature_set(col_name: str) -> list[pl.Expr]:
         binned_entropy(col_name),
         benford_correlation(col_name),
     ]
+
+
+def mean_abs_change(col_name: str) -> pl.Expr:
+    """Compute the mean absolute change between consecutive values.
+
+    Args:
+        col_name (str): The name of the column to compute the feature for.
+
+    Returns:
+        pl.Expr: A Polars expression computing the mean absolute change.
+    """
+
+    def _calc(s: pl.Series) -> float:
+        arr = s.to_numpy()
+        if arr.size <= 1:
+            return float("nan")
+        return float(np.mean(np.abs(np.diff(arr))))
+
+    return _scalar_expr(col_name, _calc, f"{col_name}__mean_abs_change")
+
+
+def mean_change(col_name: str) -> pl.Expr:
+    """Compute the mean change between consecutive values.
+
+    Args:
+        col_name (str): The name of the column to compute the feature for.
+
+    Returns:
+        pl.Expr: A Polars expression computing the mean change.
+    """
+
+    def _calc(s: pl.Series) -> float:
+        arr = s.to_numpy()
+        if arr.size <= 1:
+            return float("nan")
+        return float((arr[-1] - arr[0]) / (arr.size - 1))
+
+    return _scalar_expr(col_name, _calc, f"{col_name}__mean_change")
+
+
+def mean_second_derivative_central(col_name: str) -> pl.Expr:
+    """Compute the mean central approximation of the second derivative.
+
+    Args:
+        col_name (str): The name of the column to compute the feature for.
+
+    Returns:
+        pl.Expr: A Polars expression computing the mean central second derivative.
+    """
+
+    def _calc(s: pl.Series) -> float:
+        arr = s.to_numpy()
+        if arr.size <= 2:
+            return float("nan")
+        return float((arr[-1] - arr[-2] - arr[1] + arr[0]) / (2 * (arr.size - 2)))
+
+    return _scalar_expr(
+        col_name,
+        _calc,
+        f"{col_name}__mean_second_derivative_central",
+    )
+
+
+def absolute_sum_of_changes(col_name: str) -> pl.Expr:
+    """Compute the sum of absolute changes between consecutive values.
+
+    Args:
+        col_name (str): The name of the column to compute the feature for.
+
+    Returns:
+        pl.Expr: A Polars expression computing the absolute sum of changes.
+    """
+
+    def _calc(s: pl.Series) -> float:
+        arr = s.to_numpy()
+        return float(np.sum(np.abs(np.diff(arr))))
+
+    return _scalar_expr(col_name, _calc, f"{col_name}__absolute_sum_of_changes")
+
+
+def cid_ce(col_name: str, normalize: bool = True) -> pl.Expr:
+    """Compute the cumulative incremental deviation complexity estimate.
+
+    Args:
+        col_name (str): The name of the column to compute the feature for.
+        normalize (bool): Whether to z-normalize values before computing complexity.
+
+    Returns:
+        pl.Expr: A Polars expression computing the complexity estimate.
+    """
+
+    def _calc(s: pl.Series) -> float:
+        arr = s.to_numpy()
+        if normalize and arr.size > 0:
+            std = np.std(arr)
+            if std != 0:
+                arr = (arr - np.mean(arr)) / std
+        return float(np.sqrt(np.sum(np.diff(arr) ** 2)))
+
+    return _scalar_expr(col_name, _calc, f"{col_name}__cid_ce")
+
+
+def change_and_rate_feature_set(col_name: str) -> list[pl.Expr]:
+    """Get change and rate features for a column.
+
+    Args:
+        col_name (str): The name of the column to compute features for.
+
+    Returns:
+        list[pl.Expr]: Polars expressions for change and rate features.
+    """
+    return [
+        mean_abs_change(col_name),
+        mean_change(col_name),
+        mean_second_derivative_central(col_name),
+        absolute_sum_of_changes(col_name),
+        cid_ce(col_name),
+    ]
