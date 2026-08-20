@@ -3,6 +3,7 @@ from collections.abc import Callable
 import polars as pl
 
 from . import features
+from .features import basic_statistics, change_and_rate_features, distribution_features
 
 
 def extract_features(
@@ -40,3 +41,12 @@ def extract_features(
     result = grouped.agg(feature_exprs)
 
     return result
+
+
+__all__ = [
+    "basic_statistics",
+    "change_and_rate_features",
+    "distribution_features",
+    "extract_features",
+    "features",
+]
