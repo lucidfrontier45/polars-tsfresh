@@ -1,5 +1,6 @@
 import math
 from collections.abc import Callable
+from itertools import pairwise
 
 import numpy as np
 import polars as pl
@@ -324,6 +325,30 @@ def distribution_feature_set(col_name: str) -> list[pl.Expr]:
     ]
 
 
+def _safe_consecutive_differences(s: pl.Series) -> list[float | int]:
+    """Compute consecutive differences without integer overflow."""
+    values = s.to_list()
+    differences: list[float | int] = []
+    for left, right in pairwise(values):
+        if left is None or right is None:
+            differences.append(float("nan"))
+        else:
+            differences.append(right - left)
+    return differences
+
+
+def _safe_central_second_differences(s: pl.Series) -> list[float | int]:
+    """Compute central second differences without integer overflow."""
+    values = s.to_list()
+    differences: list[float | int] = []
+    for left, middle, right in zip(values, values[1:], values[2:]):
+        if left is None or middle is None or right is None:
+            differences.append(float("nan"))
+        else:
+            differences.append(right - 2 * middle + left)
+    return differences
+
+
 def mean_abs_change(col_name: str) -> pl.Expr:
     """Compute the mean absolute change between consecutive values.
 
@@ -335,10 +360,10 @@ def mean_abs_change(col_name: str) -> pl.Expr:
     """
 
     def _calc(s: pl.Series) -> float:
-        arr = s.cast(pl.Float64).to_numpy()
-        if arr.size <= 1:
+        differences = _safe_consecutive_differences(s)
+        if len(differences) == 0:
             return float("nan")
-        return float(np.mean(np.abs(np.diff(arr))))
+        return float(np.mean(np.abs(np.asarray(differences, dtype=np.float64))))
 
     return _scalar_expr(col_name, _calc, f"{col_name}__mean_abs_change")
 
@@ -354,10 +379,10 @@ def mean_change(col_name: str) -> pl.Expr:
     """
 
     def _calc(s: pl.Series) -> float:
-        arr = s.cast(pl.Float64).to_numpy()
-        if arr.size <= 1:
+        differences = _safe_consecutive_differences(s)
+        if len(differences) == 0:
             return float("nan")
-        return float(np.mean(np.diff(arr)))
+        return float(np.mean(np.asarray(differences, dtype=np.float64)))
 
     return _scalar_expr(col_name, _calc, f"{col_name}__mean_change")
 
@@ -373,10 +398,10 @@ def mean_second_derivative_central(col_name: str) -> pl.Expr:
     """
 
     def _calc(s: pl.Series) -> float:
-        arr = s.cast(pl.Float64).to_numpy()
-        if arr.size <= 2:
+        differences = _safe_central_second_differences(s)
+        if len(differences) == 0:
             return float("nan")
-        second_differences = arr[2:] - 2 * arr[1:-1] + arr[:-2]
+        second_differences = np.asarray(differences, dtype=np.float64)
         return float(np.mean(second_differences) / 2)
 
     return _scalar_expr(
@@ -397,8 +422,8 @@ def absolute_sum_of_changes(col_name: str) -> pl.Expr:
     """
 
     def _calc(s: pl.Series) -> float:
-        arr = s.cast(pl.Float64).to_numpy()
-        return float(np.sum(np.abs(np.diff(arr))))
+        differences = _safe_consecutive_differences(s)
+        return float(np.sum(np.abs(np.asarray(differences, dtype=np.float64))))
 
     return _scalar_expr(col_name, _calc, f"{col_name}__absolute_sum_of_changes")
 
@@ -415,12 +440,16 @@ def cid_ce(col_name: str, normalize: bool = True) -> pl.Expr:
     """
 
     def _calc(s: pl.Series) -> float:
-        arr = s.cast(pl.Float64).to_numpy()
-        if normalize and arr.size > 0:
-            std = np.std(arr)
-            if std != 0:
-                arr = (arr - np.mean(arr)) / std
-        return float(np.sqrt(np.sum(np.diff(arr) ** 2)))
+        if normalize:
+            arr = s.cast(pl.Float64).to_numpy()
+            if arr.size > 0:
+                std = np.std(arr)
+                if std != 0:
+                    arr = (arr - np.mean(arr)) / std
+            differences = np.diff(arr)
+        else:
+            differences = _safe_consecutive_differences(s)
+        return float(np.sqrt(np.sum(np.asarray(differences, dtype=np.float64) ** 2)))
 
     return _scalar_expr(col_name, _calc, f"{col_name}__cid_ce")
 
